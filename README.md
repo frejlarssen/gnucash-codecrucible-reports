@@ -1,12 +1,86 @@
-# Custom Reports for GnuCash 5.x
+# Reports for GnuCash customized for CodeCrucible
 
   * [Introduction](#introduction)
   * [Installation](#installation)
   * [Report Features](#report-features)
 
-## Introduction
+## GnuCash
 
-This is repository contains a series of custom reports for GnuCash 5.x.
+Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for example using the tutorial. When you set up the account tree, make seperate accounts for the things that will be bought (Expenses) and the different income sources (Income). Do *not* make seperate accounts for each programs/projects since this will be handled with _tags_ as explained below.
+
+## Tags
+
+This is repository contains a two custom reports for GnuCash 5.x, customized for CodeCrucible.
+
+The two reports are:
+
+* Transaction Report Extended (`transaction-extended.scm`)
+
+
+
+## Installation
+
+Before installing the custom reports, 
+
+The specific instructions below on how to load custom reports are based on more generic instructions available on the [wiki](https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report).
+
+
+The commands in this guide assumes you are using Linux, but the steps for other operating systems should be similar.
+### Step 1. Clone this repository
+
+Either clone the repository or download the zip and unzip the folder in some working directory.
+
+![Screenshot of how to clone](images/clone.png)
+
+Enter the repository with
+
+```bash
+cd gnucash-codecrucible-reports
+```
+
+
+
+
+
+### Step 2. Link the files
+
+1. Start GnuCash
+2. Go to menu Help - About
+![alt text](images/about.png)
+3. In the About GnuCash dialog, locate the entry for **GNC_USERDATA_DIR**. It's the first entry in the list. Right click on the link to copy it.
+
+4. Replace `{GNC_USERDATA_DIR}` with the path you copied and run the code below to create a link to the file:
+```bash
+ln -s ./transaction-extended.scm {GNC_USERDATA_DIR}/transaction-extended.scm
+```
+
+On my system, the full command is:
+
+```bash
+ln -s "$(pwd)/transaction-extended.scm" ~/.local/share/gnucash/transaction-extended.scm
+```
+
+### Step 3. Edit config file
+
+Go back to the _About GnuCash_ dialog from Step 2. 
+
+This time locate the second entry **GNC_USERCONFIG_DIR**. Click on the link to open the directory.
+
+### Step 4. Update or create config-user.scm
+
+If there is **already** an existing file called _config-user.scm_ in the directory from Step 3 then you need to edit that file and add whichever of these lines match the report(s) you want to enable:
+
+`(load (gnc-build-userdata-path "transaction-extended.scm"))`
+
+`(load (gnc-build-userdata-path "transaction-tags.scm"))`
+
+If there **isn't** a file called _config-user.scm_ in that directory, then you can either create one and put the above line in it or you can simply use the file that came with the zip file.
+
+### Step 5. Restart GnuCash
+
+After restarting GnuCash, the custom "Transaction Report with Tags" should be available under the Reports - Experimental menu.
+
+## The two reports
 
 ### Transaction Report Extended
 
@@ -23,47 +97,6 @@ This is repository contains a series of custom reports for GnuCash 5.x.
 **Description**: An earlier version of transaction-extended.scm that focusses on Sort by tags specifically. It was releases as a proof-of-concept to provide some basic features related to the long-discussed request of being able to use orthogonal categories, classes, tags or "analytical dimensions" to retrieve and group transactions across several general ledger accounts. See https://bugs.gnucash.org/show_bug.cgi?id=113772
 
 **Limitations**: This custom report is not a feature-rich solution. It only provides one type of report (similar to the existing transaction report) and does not provide any feature to "bulk manage" existing or future user-defined tags. So there is no feature to bulk rename, bulk move or bulk delete tags for instance. All changes to the data file (adding and changing tags) are done manually by the user. This feature only provides a custom report that uses tags as created by the user.
-
-## Installation
-
-Custom reports can be easily installed and uninstalled and do not modify the core GnuCash files nor the data file.
-
-Specific instructions below are based on more generic instructions on how to load custom reports available on the wiki: https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report
-
-### Step 1. Download and Unzip the files
-
-Download the zip with the files from the Github Code button. Then unzip the files in a temporary directory.
-
-![image](https://github.com/dawansv/gnucash-transaction-tags/assets/267163/c59f5e03-ba77-4fdb-afbf-94fe75737959)
-
-### Step 2. Copy transaction-tags.scm in the installation directory for custom reports
-
-1. Start GnuCash 5.0
-2. Go to menu Help - About
-3. In the About GnuCash dialog, locate the entry for **GNC_USERDATA_DIR**. It's the first entry in the list. Keep note of this directory. You can even click on the link to open it.
-4. Copy the _[report-filename].scm_ files of your choosing extracted from the zip file into that directory.
-
-### Step 3. Locate the installation directory for the custom reports definition file (config-user.scm)
-
-Custom reports need to be initialized in a config file called _config-user.scm_
-
-Go back to the _About GnuCash_ dialog from Step 2. 
-
-This time locate the **second** entry **GNC_USERCONFIG_DIR**. Click on the link to open the directory.
-
-### Step 4. Update or create config-user.scm
-
-If there is **already** an existing file called _config-user.scm_ in the directory from Step 3 then you need to edit that file and add whichever of these lines match the report(s) you want to enable:
-
-`(load (gnc-build-userdata-path "transaction-extended.scm"))`
-
-`(load (gnc-build-userdata-path "transaction-tags.scm"))`
-
-If there **isn't** a file called _config-user.scm_ in that directory, then you can either create one and put the above line in it or you can simply use the file that came with the zip file.
-
-### Step 5. Restart GnuCash
-
-After restarting GnuCash, the custom "Transaction Report with Tags" should be available under the Reports - Experimental menu.
 
 ## Report Features 
 
