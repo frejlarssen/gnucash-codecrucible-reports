@@ -332,7 +332,13 @@ in the Options panel."))
   ;;       #f means the sortkey cannot be subtotalled
   ;;       otherwise it converts split->string
   ;;
-  (list (list 'account-name
+  (list (list 'substring
+              (cons 'sortkey #f)
+              (cons 'split-sortvalue (lambda (s) (split-substring s parameters #t)))
+              (cons 'text (G_ "Substring"))
+              (cons 'renderer-fn (lambda (s) (split-substring s parameters #f))))
+
+        (list 'account-name
               (cons 'sortkey (list SPLIT-ACCT-FULLNAME))
               (cons 'split-sortvalue
                     (compose gnc-account-get-full-name xaccSplitGetAccount))
@@ -436,12 +442,6 @@ in the Options panel."))
               (cons 'split-sortvalue (compose xaccTransGetNotes xaccSplitGetParent))
               (cons 'text (G_ "Notes"))
               (cons 'renderer-fn (compose xaccTransGetNotes xaccSplitGetParent)))
-
-        (list 'substring
-              (cons 'sortkey #f)
-              (cons 'split-sortvalue (lambda (s) (split-substring s parameters #t)))
-              (cons 'text (G_ "Substring"))
-              (cons 'renderer-fn (lambda (s) (split-substring s parameters #f))))
 
         (list 'none
               (cons 'sortkey '())
@@ -855,12 +855,13 @@ be excluded from periodic reporting.")
   (let ((ascending-choice-list (keylist->vectorlist ascending-list))
         (key-choice-list (keylist->vectorlist (sortkey-list parameters)))
         (date-subtotal-choice-list (keylist->vectorlist date-subtotal-list))
-        (prime-sortkey 'account-name)
+        (prime-sortkey 'substring)
         (prime-sortkey-subtotal-true #t)
         (prime-date-subtotal 'monthly)
-        (sec-sortkey 'register-order)
-        (sec-sortkey-subtotal-true #f)
-        (sec-date-subtotal 'monthly))
+        (sec-sortkey 'account-name)
+        (sec-sortkey-subtotal-true #t)
+        (sec-date-subtotal 'monthly)
+        (substring-matcher-default "#P-"))
 
     (define (apply-selectable-by-name-sorting-options)
       (let* ((prime-sortkey-enabled (not (eq? prime-sortkey 'none)))
@@ -992,7 +993,7 @@ be excluded from periodic reporting.")
       pagename-sorting optname-show-subtotals-only
       "j6"
       (G_ "Show subtotals only, hiding transactional detail?")
-      #f)
+      #t)
 
     (gnc-register-complex-boolean-option options
       pagename-sorting optname-prime-subtotal
@@ -1067,7 +1068,7 @@ The match is case sensitive, so it considers uppercase and lowercase \
 letters separately, unless the 'case insensitive' checkbox is selected.
 Only the first match is considered on each split, starting with the split memo, \
 then the transaction notes, and finally the transaction description.")
-      "")
+      substring-matcher-default)
 
     (gnc-register-simple-boolean-option options
       pagename-sorting optname-substring-use-regexp
