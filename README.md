@@ -10,13 +10,11 @@ Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for 
 
 ## Tags
 
-This is repository contains a two custom reports for GnuCash 5.x, customized for CodeCrucible.
+This is repository contains a custom reports for GnuCash 5.x, customized for CodeCrucible.
 
-The two reports are:
+The only report right now is:
 
 * Transaction Report Extended (`transaction-extended.scm`)
-
-
 
 ## Installation
 
@@ -72,13 +70,11 @@ If there is **already** an existing file called _config-user.scm_ in the directo
 
 `(load (gnc-build-userdata-path "transaction-extended.scm"))`
 
-`(load (gnc-build-userdata-path "transaction-tags.scm"))`
-
 If there **isn't** a file called _config-user.scm_ in that directory, then you can either create one and put the above line in it or you can simply use the file that came with the zip file.
 
 ### Step 5. Restart GnuCash
 
-After restarting GnuCash, the custom "Transaction Report with Tags" should be available under the Reports - Experimental menu.
+After restarting GnuCash, the custom "Transaction Report Extended" should be available under the Reports - Experimental menu.
 
 ## The two reports
 
@@ -102,7 +98,7 @@ After restarting GnuCash, the custom "Transaction Report with Tags" should be av
 
 ### Transaction Report Extended
 
-(TO DO)
+(TO DO. But it basically works similar to "Transaction Report with Tags", but with capability of searching for any string.)
 
 ### Transaction Report with Tags
 
