@@ -1,29 +1,58 @@
 # Reports for GnuCash customized for CodeCrucible
 
-  * [Introduction](#introduction)
+  * [Motivation](#motivation)
+  * [GnuCash](#gnucash)
+  * [Reports](#reports)
   * [Installation](#installation)
-  * [Report Features](#report-features)
+
+## Motivation
+
+Before installing you might wonder why you should do it. This section explains why.
+
+Accounts in GnuCash are organized in an account tree. The accounts for expenses might for example be organized like this:
+
+<figure>
+    <img src="images/simple_expenses.png"
+         alt="Simple expenses example">
+    <figcaption>Figure 1: Expenses.</figcaption>
+</figure>
+
+
+CodeCrucible runs multiple programs, for example one in August 2025 and one in December 2025. We would like to seperate the expenses between these programs. One **bad** way to do this would be:
+
+<figure>
+    <img src="images/bad_expenses.png"
+         alt="Bad expenses example">
+    <figcaption>Figure 2: Bad example.</figcaption>
+</figure>
+
+Instead, we want to organize the account tree as in Figure 1. We differ between accounts when we do transactions by "tagging" them in the description:
+
+<figure>
+    <img src="images/transactions.png"
+         alt="Transactions">
+    <figcaption>Figure 3: Transactions with tags for accounts.</figcaption>
+</figure>
+
+The reports in this file allows us to use these tags to see total expenses for the program `#P-2025Aug` (August holiday 2025) etc.
 
 ## GnuCash
 
-Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for example using the tutorial. When you set up the account tree, make seperate accounts for the things that will be bought (Expenses) and the different income sources (Income). Do *not* make seperate accounts for each programs/projects since this will be handled with _tags_ as explained below.
+Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for example using the tutorial.
 
-## Tags
+## Reports
 
-This is repository contains a two custom reports for GnuCash 5.x, customized for CodeCrucible.
+This is repository contains one custom reports for GnuCash 5, customized for CodeCrucible.
 
-The two reports are:
+The report is:
 
 * Transaction Report Extended (`transaction-extended.scm`)
 
-
+(More fancy ones will be added later. (Pie-charts etc would be cool.))
 
 ## Installation
 
-Before installing the custom reports, 
-
-The specific instructions below on how to load custom reports are based on more generic instructions available on the [wiki](https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report).
-
+The specific instructions below on how to load custom reports are based on more generic instructions available on the [wiki](https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report). Check there if something doesn't work.
 
 The commands in this guide assumes you are using Linux, but the steps for other operating systems should be similar.
 ### Step 1. Clone this repository
@@ -72,13 +101,15 @@ If there is **already** an existing file called _config-user.scm_ in the directo
 
 `(load (gnc-build-userdata-path "transaction-extended.scm"))`
 
-`(load (gnc-build-userdata-path "transaction-tags.scm"))`
-
 If there **isn't** a file called _config-user.scm_ in that directory, then you can either create one and put the above line in it or you can simply use the file that came with the zip file.
 
 ### Step 5. Restart GnuCash
 
-After restarting GnuCash, the custom "Transaction Report with Tags" should be available under the Reports - Experimental menu.
+After restarting GnuCash, the custom "Transaction Report Extended" should be available under the Reports - Experimental menu.
+
+Open the options and select accounts and date similar to the normal transaction report. It should show totals per program by default. For more configuration, check below.
+
+# (The stuff below is from the repository I forked, so it might not be up to date. The two reports are quite similar so the instructions probably works for both./Frej)
 
 ## The two reports
 
