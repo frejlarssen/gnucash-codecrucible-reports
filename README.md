@@ -133,7 +133,7 @@ Open the options and select accounts and date similar to the normal transaction 
 
 ### Transaction Report Extended
 
-(TO DO)
+(TO DO. But it basically works similar to "Transaction Report with Tags", but with capability of searching for any string.)
 
 ### Transaction Report with Tags
 
