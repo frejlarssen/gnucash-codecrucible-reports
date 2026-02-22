@@ -1841,7 +1841,8 @@ Default is [No Match]/[Empty String].")
                             ((secondary) primary-indent)))
              (right-indent (- indent-level left-indent)))
 
-        (unless (report-uses? 'subtotals-only)
+        (when (or (not (report-uses? 'subtotals-only))
+                  (eq? level 'primary))
           (gnc:html-table-append-row/markup!
            table subheading-style
            (append
