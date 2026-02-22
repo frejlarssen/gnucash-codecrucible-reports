@@ -2185,8 +2185,10 @@ Default is [No Match]/[Empty String].")
                        (not (equal? (primary-subtotal-comparator current)
                                     (primary-subtotal-comparator next)))))
               (when secondary-subtotal-comparator
-                (add-subtotal-row (total-string
-                                   (render-summary current 'secondary #f))
+                (add-subtotal-row (if (report-uses? 'subtotals-only)
+                                      (render-summary current 'secondary #f)
+                                      (total-string
+                                       (render-summary current 'secondary #f)))
                                   secondary-subtotal-collectors
                                   def:secondary-subtotal-style
                                   'secondary
@@ -2227,8 +2229,10 @@ Default is [No Match]/[Empty String].")
                          (or (not next)
                              (not (equal? (secondary-subtotal-comparator current)
                                           (secondary-subtotal-comparator next)))))
-                (add-subtotal-row (total-string
-                                   (render-summary current 'secondary #f))
+                (add-subtotal-row (if (report-uses? 'subtotals-only)
+                                      (render-summary current 'secondary #f)
+                                      (total-string
+                                       (render-summary current 'secondary #f)))
                                   secondary-subtotal-collectors
                                   def:secondary-subtotal-style
                                   'secondary
