@@ -78,16 +78,17 @@ cd gnucash-codecrucible-reports
 ![alt text](images/about.png)
 3. In the About GnuCash dialog, locate the entry for **GNC_USERDATA_DIR**. It's the first entry in the list. Right click on the link to copy it.
 
-4. Replace `{GNC_USERDATA_DIR}` with the path you copied and run the code below to create a link to the file:
-```bash
-ln -s ./transaction-extended.scm {GNC_USERDATA_DIR}/transaction-extended.scm
-```
+4. Replace `{GNC_USERDATA_DIR}` with the path you copied and run the command below to create a link to the file:
+    ```bash
+    ln -s ./transaction-extended.scm {GNC_USERDATA_DIR}/transaction-extended.scm
+    ```
+    (If you copied the path by right clicking, make sure to remove `file://` so that the path starts with `/home`.)
 
-On my system, the full command is:
+    On my system, the full command is:
 
-```bash
-ln -s "$(pwd)/transaction-extended.scm" ~/.local/share/gnucash/transaction-extended.scm
-```
+    ```bash
+    ln -s "$(pwd)/transaction-extended.scm" ~/.local/share/gnucash/transaction-extended.scm
+    ```
 
 ### Step 3. Edit config file
 
