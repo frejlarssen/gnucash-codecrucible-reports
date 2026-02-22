@@ -580,9 +580,7 @@ balance at a given time. Extended with tags."))
     'version 1
     'name name
     'report-guid uuid
-    'menu-path (if income-expense?
-                   (list gnc:menuname-income-expense)
-                   (list gnc:menuname-asset-liability))
+    'menu-path (list gnc:menuname-experimental)
     'menu-name menuname
     'menu-tip menutip
     'options-generator (lambda () (options-generator acct-types
