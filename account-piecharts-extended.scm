@@ -32,6 +32,7 @@
 (use-modules (gnucash report))
 (use-modules (srfi srfi-1))
 (use-modules (ice-9 format))
+(use-modules (ice-9 regex))
 
 (define menuname-income (N_ "Income Piechart Extended"))
 (define menuname-expense (N_ "Expense Piechart Extended"))
@@ -61,6 +62,7 @@ balance at a given time. Extended with tags."))
 (define reportname-assets (N_ "Assets Extended"))
 (define reportname-securities (N_ "Securities Extended"))
 (define reportname-liabilities (N_ "Liabilities Extended"))
+(define report-guid-expense "adb97fce85e64f9c9a832ee15f488b1d")
 
 (define optname-from-date (N_ "Start Date"))
 (define optname-to-date (N_ "End Date"))
@@ -80,11 +82,14 @@ balance at a given time. Extended with tags."))
 
 (define optname-averaging (N_ "Show Average"))
 (define opthelp-averaging (N_ "Select whether the amounts should be shown over the full time period or rather as the average e.g. per month."))
+(define optname-project-tag-pattern (N_ "Project Tag Match Pattern"))
+(define optname-project-tag-caseinsensitive (N_ "Project Tag Match Pattern Case Sensitivity"))
+(define optname-project-tag-no-match-label (N_ "Project Tag No Match Label"))
 
 ;; The option-generator. The only dependence on the type of piechart
 ;; is the list of account types that the account selection option
 ;; accepts.
-(define (options-generator account-types do-intervals? depth-based?)
+(define (options-generator account-types do-intervals? depth-based? expense-tagging?)
   (let* ((options (gnc-new-optiondb)))
 
     (if do-intervals?
@@ -111,6 +116,23 @@ balance at a given time. Extended with tags."))
                 (vector 'YearDelta (N_ "Yearly"))
                 (vector 'MonthDelta (N_ "Monthly"))
                 (vector 'WeekDelta (N_ "Weekly")))))
+
+    (when expense-tagging?
+      (gnc-register-string-option options
+        gnc:pagename-general optname-project-tag-pattern
+        "g"
+        (N_ "Match pattern used to extract project tags from transaction description, notes, and memo.")
+        "#P-")
+      (gnc-register-simple-boolean-option options
+        gnc:pagename-general optname-project-tag-caseinsensitive
+        "h"
+        (N_ "If selected, project tag matching ignores case.")
+        #f)
+      (gnc-register-string-option options
+        gnc:pagename-general optname-project-tag-no-match-label
+        "i"
+        (N_ "Label used for transactions where no project tag is found.")
+        (G_ "[No Match]")))
 
     (gnc-register-account-list-limited-option options
       gnc:pagename-accounts optname-accounts
@@ -282,6 +304,33 @@ balance at a given time. Extended with tags."))
   (let ((final-work (traverse! accts work-done)))
     (cons final-work (hash-map->list translate table))))
 
+(define (make-project-tag-regexp pattern caseinsensitive?)
+  (if (and (defined? 'make-regexp)
+           (string? pattern)
+           (not (string-null? pattern)))
+      (let* ((escaped
+              (regexp-substitute/global
+               #f "[#-.]|[[-^]|[?|{}]" pattern
+               'pre (lambda (m) (string-append "\\" (match:substring m))) 'post))
+             (rx (string-append escaped "[^ ]*")))
+        (if caseinsensitive?
+            (make-regexp rx regexp/icase)
+            (make-regexp rx)))
+      #f))
+
+(define (project-tag-from-split split tag-regexp no-match-label)
+  (if (regexp? tag-regexp)
+      (let* ((trans (xaccSplitGetParent split))
+             (capture (lambda (text)
+                        (and (string? text)
+                             (let ((sm (regexp-exec tag-regexp text)))
+                               (and sm (match:substring sm))))))
+             (tag (or (capture (xaccTransGetDescription trans))
+                      (capture (xaccTransGetNotes trans))
+                      (capture (xaccSplitGetMemo split)))))
+        (if (and tag (not (string-null? tag))) tag no-match-label))
+      no-match-label))
+
 ;; The rendering function. Since it works for a bunch of different
 ;; account settings, you have to give the reportname, the
 ;; account-types to work on and whether this report works on
@@ -331,6 +380,10 @@ balance at a given time. Extended with tags."))
         (height (get-option gnc:pagename-display optname-plot-height))
         (width (get-option gnc:pagename-display optname-plot-width))
         (sort-method (get-option gnc:pagename-display optname-sort-method))
+        (expense-tagging? (string=? report-guid report-guid-expense))
+        (project-tag-pattern #f)
+        (project-tag-caseinsensitive? #f)
+        (project-tag-no-match-label (G_ "[No Match]"))
 
         (document (gnc:make-html-document))
         (chart (gnc:make-html-chart))
@@ -429,6 +482,70 @@ balance at a given time. Extended with tags."))
         (get-data account-balance show-acct? work-to-do tree-depth
                   0 1 topl-accounts)))
 
+      (define (expense-tag-data)
+        (define table (make-hash-table))
+
+        (define (in-date-range? split)
+          (let ((date (xaccTransGetDate (xaccSplitGetParent split))))
+            (if do-intervals?
+                (and (<= from-date date) (<= date to-date))
+                (<= date to-date))))
+
+        (define (collect-accounts current-depth accts)
+          (if (< current-depth tree-depth)
+              (let iter ((remaining accts)
+                         (res '()))
+                (if (null? remaining)
+                    res
+                    (let* ((cur (car remaining))
+                           (tail (cdr remaining))
+                           (subaccts (collect-accounts (1+ current-depth)
+                                                       (gnc-account-get-children cur)))
+                           (this (if (show-acct? cur) (list cur) '())))
+                      (iter tail (append this subaccts res)))))
+              (filter show-acct? accts)))
+
+        (define (add-split! split tag-regexp)
+          (when (in-date-range? split)
+            (let* ((trans (xaccSplitGetParent split))
+                   (raw-mon (gnc:make-gnc-monetary
+                             (xaccTransGetCurrency trans)
+                             (xaccSplitGetValue split)))
+                   (converted (exchange-fn
+                               raw-mon
+                               report-currency))
+                   (raw-amount (abs (gnc:gnc-monetary-amount raw-mon)))
+                   (converted-amount (abs (gnc:gnc-monetary-amount converted)))
+                   ;; Fallback to raw value when conversion table/rates are missing.
+                   (amount (if (and (= converted-amount 0)
+                                    (not (= raw-amount 0)))
+                               raw-amount
+                               converted-amount))
+                   (tag (project-tag-from-split split tag-regexp project-tag-no-match-label))
+                   (handle (hash-create-handle! table tag 0))
+                   (current (cdr handle)))
+              (hash-set! table tag (+ current amount)))))
+
+        (define (translate key value)
+          (list value key))
+
+        (let* ((tag-regexp (make-project-tag-regexp
+                            project-tag-pattern
+                            project-tag-caseinsensitive?))
+               (selected-accts
+                (delete-duplicates (collect-accounts 1 topl-accounts) eq?))
+               (final-work
+                (fold (lambda (acct done)
+                        (gnc:report-percent-done (* 100 (/ (1+ done) (work-to-do))))
+                        (for-each
+                         (lambda (split)
+                           (add-split! split tag-regexp))
+                         (xaccAccountGetSplitList acct))
+                        (1+ done))
+                      0
+                      selected-accts)))
+          (cons final-work (hash-map->list translate table))))
+
       (define (fix-signs combined)
         (map (lambda (pair)
                (if reverse-balance?
@@ -440,10 +557,21 @@ balance at a given time. Extended with tags."))
 
       (if (not (null? accounts))
           (begin
+            (when expense-tagging?
+              (set! project-tag-pattern
+                    (get-option gnc:pagename-general optname-project-tag-pattern))
+              (set! project-tag-caseinsensitive?
+                    (get-option gnc:pagename-general optname-project-tag-caseinsensitive))
+              (set! project-tag-no-match-label
+                    (get-option gnc:pagename-general optname-project-tag-no-match-label)))
             (set! combined
                   (sort (filter (lambda (pair) (not (>= 0.0 (car pair))))
-                                (fix-signs (cdr (base-data))))
-                        (sort-comparator sort-method show-fullname?)))
+                                (fix-signs (cdr (if expense-tagging?
+                                                    (expense-tag-data)
+                                                    (base-data)))))
+                        (if expense-tagging?
+                            (lambda (a b) (> (car a) (car b)))
+                            (sort-comparator sort-method show-fullname?))))
 
             ;; if too many slices, condense them to an 'other' slice
             ;; and add a link to a new pie report with just those
@@ -472,6 +600,7 @@ balance at a given time. Extended with tags."))
             (if
              (not (null? combined))
              (let ((urls (and depth-based?
+                              (not expense-tagging?)
                               (map
                                (lambda (series)
                                  (if (string? (cadr series))
@@ -529,7 +658,9 @@ balance at a given time. Extended with tags."))
                (gnc:html-chart-set-width! chart width)
                (gnc:html-chart-set-height! chart height)
                (gnc:html-chart-add-data-series! chart
-                                                (G_ "Accounts")
+                                                (if expense-tagging?
+                                                    (G_ "Project Tags")
+                                                    (G_ "Accounts"))
                                                 (map round-scu (unzip1 combined))
                                                 (gnc:assign-colors (length combined))
                                                 'urls urls)
@@ -585,7 +716,8 @@ balance at a given time. Extended with tags."))
     'menu-tip menutip
     'options-generator (lambda () (options-generator acct-types
                                                      income-expense?
-                                                     depth-based?))
+                                                     depth-based?
+                                                     (string=? uuid report-guid-expense)))
     'renderer (lambda (report-obj)
                 (piechart-renderer report-obj name uuid
                                    acct-types income-expense? depth-based?
@@ -612,7 +744,7 @@ balance at a given time. Extended with tags."))
   (list ACCT-TYPE-EXPENSE)
   #t #t #f
   menuname-expense menutip-expense
-  "adb97fce85e64f9c9a832ee15f488b1d")
+  report-guid-expense)
 
 (build-report!
   reportname-assets
