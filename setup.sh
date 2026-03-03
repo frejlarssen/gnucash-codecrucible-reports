@@ -5,7 +5,7 @@ echo "Setting up the custom reports for GnuCash"
 echo "----------------------------------------"
 
 # List of reports to link and add to config-user.scm
-reports=("transaction-extended.scm" "account-piecharts-extended.scm")
+reports=("transaction-extended.scm" "account-piecharts-extended.scm" "project-tags-balance.scm")
 
 echo "Linking the files to the userdata directory"
 GNC_USERDATA_DIR=$(gnucash --paths | grep GNC_USERDATA_DIR | awk '{print $2}')
