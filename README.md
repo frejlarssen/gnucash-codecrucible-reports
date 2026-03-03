@@ -1,9 +1,9 @@
 # Reports for GnuCash customized for CodeCrucible
 
-  * [Motivation](#motivation)
-  * [GnuCash](#gnucash)
-  * [Reports](#reports)
-  * [Installation](#installation)
+* [Motivation](#motivation)
+* [GnuCash](#gnucash)
+* [Reports](#reports)
+* [Installation](#installation)
 
 ## Motivation
 
@@ -16,7 +16,6 @@ Accounts in GnuCash are organized in an account tree. The accounts for expenses 
          alt="Simple expenses example">
     <figcaption>Figure 1: Expenses.</figcaption>
 </figure>
-
 
 CodeCrucible runs multiple programs, for example one in August 2025 and one in December 2025. We would like to seperate the expenses between these programs. One **bad** way to do this would be:
 
@@ -55,6 +54,7 @@ The report is:
 The specific instructions below on how to load custom reports are based on more generic instructions available on the [wiki](https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report). Check there if something doesn't work.
 
 The commands in this guide assumes you are using Linux, but the steps for other operating systems should be similar.
+
 ### Step 1. Clone this repository
 
 Either clone the repository or download the zip and unzip the folder in some working directory.
@@ -67,11 +67,24 @@ Enter the repository with
 cd gnucash-codecrucible-reports
 ```
 
+### Step 1.5. Setup using setup file
 
+Give yourself permission to execute `setup.sh`:
 
+```bash
+chmod u+x setup.sh
+```
 
+Run the file `setup.sh`:
+
+```bash
+./setup.sh
+```
+
+If this didn't work, do it manually as in Step 2.
 
 ### Step 2. Link the files
+
 
 1. Start GnuCash
 2. Go to menu Help - About
@@ -79,9 +92,11 @@ cd gnucash-codecrucible-reports
 3. In the About GnuCash dialog, locate the entry for **GNC_USERDATA_DIR**. It's the first entry in the list. Copy the link.
 
 4. Replace `{GNC_USERDATA_DIR}` with the path you copied and run the command below to create a link to the file:
+
     ```bash
     ln -s $(pwd)/transaction-extended.scm {GNC_USERDATA_DIR}/transaction-extended.scm
     ```
+
     while standing in the folder `gnucash-codecrucible-reports`.
     (If you copied the path by right clicking, make sure to remove `file://` so that the path starts with `/home`.)
 
