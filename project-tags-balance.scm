@@ -55,17 +55,27 @@
 
 ;; Helper: simple association helpers
 
-;; Numeric addition helper for gnc-numeric values.
+;; Numeric helpers for gnc-numeric values.
 (define (ptb:n+ a b)
   (gnc-numeric-add a b 0 GNC-DENOM-LCD))
 
-(define (alist-inc! table key delta)
+(define (ptb:n- a b)
+  (gnc-numeric-sub a b 0 GNC-DENOM-LCD))
+
+(define ptb:zero (gnc-numeric-zero))
+
+;; table: alist of (project-tag . (income . expense))
+(define (alist-inc! table key income-delta expense-delta)
   (let ((existing (assoc key table)))
     (if existing
-        (begin
-          (set-cdr! existing (ptb:n+ (cdr existing) delta))
+        (let* ((cur (cdr existing))
+               (cur-income (car cur))
+               (cur-expense (cdr cur)))
+          (set-cdr! existing
+                    (cons (ptb:n+ cur-income income-delta)
+                          (ptb:n+ cur-expense expense-delta)))
           table)
-        (cons (cons key delta) table))))
+        (cons (cons key (cons income-delta expense-delta)) table))))
 
 ;; Helper: find first project tag matching the prefix in split/transaction
 ;; Very small, self-contained version inspired by transaction-tags.scm
@@ -94,17 +104,6 @@
   (let ((type (xaccAccountGetType account)))
     (or (eq? type ACCT-TYPE-INCOME)
         (eq? type ACCT-TYPE-EXPENSE))))
-
-;; Helper: sign-normalised amount (no currency conversion yet)
-
-(define (ptb:split-amount-common split params)
-  (let* ((amount (xaccSplitGetAmount split))
-         (account (xaccSplitGetAccount split)))
-    ;; Use same sign convention as standard income/expense:
-    ;; income accounts are negative, expense accounts positive.
-    (if (eq? (xaccAccountGetType account) ACCT-TYPE-INCOME)
-        (gnc-numeric-neg amount)
-        amount)))
 
 ;; Options generator: small, focused set based on trep-options
 
@@ -232,9 +231,10 @@
         (let* ((splits (qof-query-run query)))
           (qof-query-destroy query)
 
-          ;; Filter splits to income/expense accounts and with project tags
+          ;; Filter splits to income/expense accounts and with project tags.
+          ;; Accumulate per-project income and expense separately.
           (let loop ((remaining splits)
-                     (project->amount '()))
+                     (project->amount '()))    ; (project . (income . expense))
             (if (null? remaining)
                 ;; done
                 (if (null? project->amount)
@@ -251,7 +251,8 @@
                                   (lambda (a b)
                                     (string<? (car a) (car b)))))
                            (table (gnc:make-html-table))
-                           (grand-total (gnc-numeric-zero)))
+                           (grand-income (gnc-numeric-zero))
+                           (grand-expense (gnc-numeric-zero)))
                       ;; Title and date range
                       (gnc:html-document-set-title! document report-title)
 
@@ -274,13 +275,18 @@
                        table
                        (list
                         (gnc:make-html-table-cell/markup "th" (G_ "Project"))
+                        (gnc:make-html-table-cell/markup "th" (G_ "Income"))
+                        (gnc:make-html-table-cell/markup "th" (G_ "Expenses"))
                         (gnc:make-html-table-cell/markup "th" (G_ "Balance"))))
 
                       ;; Rows
                       (for-each
                        (lambda (entry)
                          (let* ((raw-name (car entry))
-                                (amount (cdr entry))
+                                (totals (cdr entry))
+                                (income (car totals))
+                                (expense (cdr totals))
+                                (balance (ptb:n- income expense))
                                 (display-name
                                  (if (and strip-prefix?
                                           (string-prefix? project-tag-prefix raw-name))
@@ -288,48 +294,72 @@
                                      raw-name))
                                 (commodity (xaccAccountGetCommodity
                                             (xaccSplitGetAccount (car splits))))
-                                (monetary (gnc:make-gnc-monetary commodity amount)))
-                           (set! grand-total (ptb:n+ grand-total amount))
+                                (income-mon (gnc:make-gnc-monetary commodity income))
+                                (expense-mon (gnc:make-gnc-monetary commodity expense))
+                                (balance-mon (gnc:make-gnc-monetary commodity balance)))
+                           (set! grand-income (ptb:n+ grand-income income))
+                           (set! grand-expense (ptb:n+ grand-expense expense))
                            (gnc:html-table-append-row!
                             table
                             (list
                              (gnc:make-html-text display-name)
-                             (gnc:make-html-text monetary)))))
+                             (gnc:make-html-text income-mon)
+                             (gnc:make-html-text expense-mon)
+                             (gnc:make-html-text balance-mon)))))
                        sorted-projects)
 
                       ;; Grand total row
                       (let* ((commodity (xaccAccountGetCommodity
                                          (xaccSplitGetAccount (car splits))))
-                             (grand-monetary (gnc:make-gnc-monetary commodity grand-total)))
+                             (grand-balance (ptb:n- grand-income grand-expense))
+                             (grand-income-mon (gnc:make-gnc-monetary commodity grand-income))
+                             (grand-expense-mon (gnc:make-gnc-monetary commodity grand-expense))
+                             (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance)))
                         (gnc:html-table-append-row!
                          table
                          (list
                           (gnc:make-html-table-cell/markup "th" (G_ "Total"))
-                          (gnc:make-html-table-cell/markup "th" grand-monetary))))
+                          (gnc:make-html-table-cell/markup "th" grand-income-mon)
+                          (gnc:make-html-table-cell/markup "th" grand-expense-mon)
+                          (gnc:make-html-table-cell/markup "th" grand-balance-mon))))
 
                       (gnc:html-document-add-object! document table)
 
                       (when (opt-val gnc:pagename-general optname-table-export)
                         (let ((rows
                                (map (lambda (entry)
-                                      (let* ((amount (cdr entry))
+                                      (let* ((raw-name (car entry))
+                                             (totals (cdr entry))
+                                             (income (car totals))
+                                             (expense (cdr totals))
+                                             (balance (ptb:n- income expense))
                                              (commodity (xaccAccountGetCommodity
                                                          (xaccSplitGetAccount (car splits))))
-                                             (monetary (gnc:make-gnc-monetary commodity amount)))
-                                        (list (car entry) monetary)))
+                                             (income-mon (gnc:make-gnc-monetary commodity income))
+                                             (expense-mon (gnc:make-gnc-monetary commodity expense))
+                                             (balance-mon (gnc:make-gnc-monetary commodity balance)))
+                                        (list raw-name income-mon expense-mon balance-mon)))
                                     sorted-projects)))
                           (gnc:html-document-set-export-string
                            document
                            (gnc:lists->csv
-                            (cons '("project" "balance") rows)))))))
+                            (cons '("project" "income" "expenses" "balance") rows)))))))
                 (let* ((split (car remaining))
                        (rest (cdr remaining))
                        (account (xaccSplitGetAccount split)))
                   (if (ptb:income-or-expense? account)
                       (let ((tag (ptb:extract-project-tag split project-tag-prefix)))
                         (if tag
-                            (let* ((amount (ptb:split-amount-common split params))
-                                   (updated (alist-inc! project->amount tag amount)))
+                            (let* ((raw-amount (xaccSplitGetAmount split))
+                                   (type (xaccAccountGetType account))
+                                   (income-delta (if (eq? type ACCT-TYPE-INCOME)
+                                                     (gnc-numeric-neg raw-amount)
+                                                     ptb:zero))
+                                   (expense-delta (if (eq? type ACCT-TYPE-EXPENSE)
+                                                      raw-amount
+                                                      ptb:zero))
+                                   (updated (alist-inc! project->amount
+                                                        tag income-delta expense-delta)))
                               (loop rest updated))
                             (loop rest project->amount)))
                       (loop rest project->amount)))))))))
