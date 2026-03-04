@@ -306,14 +306,19 @@
                              (grand-balance (ptb:n- grand-income grand-expense))
                              (grand-income-mon (gnc:make-gnc-monetary commodity grand-income))
                              (grand-expense-mon (gnc:make-gnc-monetary commodity grand-expense))
-                             (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance)))
+                             (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance))
+                             ;; Render grand total as a plain string to avoid
+                             ;; special negative header markup like <th-neg>.
+                             (grand-balance-str
+                              (gnc:default-html-gnc-monetary-renderer
+                               grand-balance-mon '())))
                         (gnc:html-table-append-row!
                          table
                          (list
                           (gnc:make-html-table-cell/markup "th" (G_ "Total"))
                           (gnc:make-html-table-cell/markup "th" grand-income-mon)
                           (gnc:make-html-table-cell/markup "th" grand-expense-mon)
-                          (gnc:make-html-table-cell/markup "th" grand-balance-mon))))
+                          (gnc:make-html-table-cell/markup "th" grand-balance-str))))
 
                       (gnc:html-document-add-object! document table)
 
@@ -336,7 +341,7 @@
                            document
                            (gnc:lists->csv
                             (cons '("project" "income" "expenses" "balance") rows)))))))
-                (let* ((split (car remaining))
+                (let* ((split (car remaining)) ; if remaining is not null
                        (rest (cdr remaining))
                        (account (xaccSplitGetAccount split)))
                   (if (ptb:income-or-expense? account)
