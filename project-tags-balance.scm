@@ -19,7 +19,6 @@
 (use-modules (gnucash report report-core)
              (gnucash report report-utilities)
              (gnucash report options-utilities)
-             (gnucash report commodity-utilities)
              (gnucash report html-document)
              (gnucash report html-style-info)
              (gnucash report html-utilities)
@@ -77,12 +76,11 @@
           table)
         (cons (cons key (cons income-delta expense-delta)) table))))
 
-;; Helper: find first project tag matching the prefix in split/transaction
-;; Very small, self-contained version inspired by transaction-tags.scm
+;; Helper: find first project tag matching the prefix in split/transaction.
+;; Small, self-contained version inspired by transaction-tags.scm.
 
 (define (ptb:extract-project-tag split tag-prefix)
-  (let* ((prefix-len (string-length tag-prefix))
-         (rx (make-regexp
+  (let* ((rx (make-regexp
               (string-append
                (regexp-substitute/global
                 #f "[#-.]|[[-^]|[?|{}]" tag-prefix
@@ -195,13 +193,7 @@
          (project-tag-prefix
           (let ((trimmed (string-trim project-tag-prefix-raw)))
             (if (string-null? trimmed) def:project-tag-prefix trimmed)))
-         (strip-prefix? (opt-val pagename-display optname-strip-prefix))
-         (common-currency
-          (and (opt-val pagename-currency optname-common-currency)
-               (opt-val pagename-currency optname-currency)))
-         (price-source (opt-val pagename-currency optname-price-source))
-         (params (list (cons 'common-currency common-currency)
-                       (cons 'common-currency/price-source price-source))))
+         (strip-prefix? (opt-val pagename-display optname-strip-prefix)))
 
     (cond
      ((null? accounts)
