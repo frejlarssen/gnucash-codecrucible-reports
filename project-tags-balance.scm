@@ -63,6 +63,18 @@
 
 (define ptb:zero (gnc-numeric-zero))
 
+;; Simple HTML table cell helpers, following patterns from standard
+;; reports like account-summary and investment-lots.
+
+(define (ptb:header-cell label)
+  (gnc:make-html-table-cell/markup "number-header" label))
+
+(define (ptb:total-label-cell label)
+  (gnc:make-html-table-cell/markup "total-label-cell" label))
+
+(define (ptb:total-number-cell value)
+  (gnc:make-html-table-cell/markup "total-number-cell" value))
+
 ;; table: alist of (project-tag . (income . expense))
 (define (alist-inc! table key income-delta expense-delta)
   (let ((existing (assoc key table)))
@@ -266,10 +278,10 @@
                       (gnc:html-table-append-row!
                        table
                        (list
-                        (gnc:make-html-table-cell/markup "th" (G_ "Project"))
-                        (gnc:make-html-table-cell/markup "th" (G_ "Income"))
-                        (gnc:make-html-table-cell/markup "th" (G_ "Expenses"))
-                        (gnc:make-html-table-cell/markup "th" (G_ "Balance"))))
+                        (ptb:header-cell (G_ "Project"))
+                        (ptb:header-cell (G_ "Income"))
+                        (ptb:header-cell (G_ "Expenses"))
+                        (ptb:header-cell (G_ "Balance"))))
 
                       ;; Rows
                       (for-each
@@ -306,19 +318,14 @@
                              (grand-balance (ptb:n- grand-income grand-expense))
                              (grand-income-mon (gnc:make-gnc-monetary commodity grand-income))
                              (grand-expense-mon (gnc:make-gnc-monetary commodity grand-expense))
-                             (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance))
-                             ;; Render grand total as a plain string to avoid
-                             ;; special negative header markup like <th-neg>.
-                             (grand-balance-str
-                              (gnc:default-html-gnc-monetary-renderer
-                               grand-balance-mon '())))
+                             (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance)))
                         (gnc:html-table-append-row!
                          table
                          (list
-                          (gnc:make-html-table-cell/markup "th" (G_ "Total"))
-                          (gnc:make-html-table-cell/markup "th" grand-income-mon)
-                          (gnc:make-html-table-cell/markup "th" grand-expense-mon)
-                          (gnc:make-html-table-cell/markup "th" grand-balance-str))))
+                          (ptb:total-label-cell (G_ "Total"))
+                          (ptb:total-number-cell grand-income-mon)
+                          (ptb:total-number-cell grand-expense-mon)
+                          (ptb:total-number-cell grand-balance-mon))))
 
                       (gnc:html-document-add-object! document table)
 
