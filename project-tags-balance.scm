@@ -380,8 +380,8 @@
                              (grand-realloc-income-mon (gnc:make-gnc-monetary commodity grand-realloc-income))
                              (grand-realloc-expense-mon (gnc:make-gnc-monetary commodity grand-realloc-expense))
                              (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance)))
-                        (gnc:html-table-append-row!
-                         table
+                        (gnc:html-table-append-row/markup!
+                         table "grand-total"
                          (list
                           (ptb:total-label-cell (G_ "Total"))
                           (ptb:total-number-cell grand-income-mon)
@@ -400,15 +400,15 @@
                                  (untagged-realloc-income-mon (gnc:make-gnc-monetary commodity untagged-realloc-income))
                                  (untagged-realloc-expense-mon (gnc:make-gnc-monetary commodity untagged-realloc-expense))
                                  (untagged-balance-mon (gnc:make-gnc-monetary commodity untagged-balance)))
-                            (gnc:html-table-append-row!
-                             table
-                             (list
-                              (ptb:total-label-cell (G_ "No project tag"))
-                              (ptb:total-number-cell untagged-income-mon)
-                              (ptb:total-number-cell untagged-expense-mon)
-                              (ptb:total-number-cell untagged-realloc-income-mon)
-                              (ptb:total-number-cell untagged-realloc-expense-mon)
-                              (ptb:total-number-cell untagged-balance-mon))))
+                           (gnc:html-table-append-row/markup!
+                            table "grand-total"
+                            (list
+                             (ptb:total-label-cell (G_ "No project tag"))
+                             (ptb:total-number-cell untagged-income-mon)
+                             (ptb:total-number-cell untagged-expense-mon)
+                             (ptb:total-number-cell untagged-realloc-income-mon)
+                             (ptb:total-number-cell untagged-realloc-expense-mon)
+                             (ptb:total-number-cell untagged-balance-mon))))
 
                       (gnc:html-document-add-object! document table)
 
