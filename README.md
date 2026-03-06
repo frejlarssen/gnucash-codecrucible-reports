@@ -41,11 +41,13 @@ Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for 
 
 ## Reports
 
-This is repository contains one custom reports for GnuCash 5, customized for CodeCrucible.
+This is repository contains custom reports for GnuCash 5, customized for CodeCrucible.
 
-The report is:
+The reports are:
 
 * Transaction Report Extended (`transaction-extended.scm`)
+
+* Project Balance (`project-tags-balance.scm`)
 
 (More fancy ones will be added later. (Pie-charts etc would be cool.))
 
@@ -124,29 +126,29 @@ After restarting GnuCash, the custom "Transaction Report Extended" should be ava
 
 Open the options and select accounts and date similar to the normal transaction report. It should show totals per program by default. For more configuration, check below.
 
-# (The stuff below is from the repository I forked, so it might not be up to date. The two reports are quite similar so the instructions probably works for both./Frej)
-
-## The two reports
+## The reports
 
 ### Transaction Report Extended
 
 **Filename**: transaction-extended.scm
 
+**Description**: Similar to the built in Transaction Report, but also has the capability to sort by project (#P- tag).
+
+### Project Balance
+
+**Filename**: project-tags-balance.scm
+
+**Description**: Shows an overview over all projects. It shows the Incomes, Expenses, Reallocations between projects and the projects balance (Income - Expenses + Reallocations in - Reallocations out).
+
+## Report Features
+
+Disclaimer: Some of this is from the repository I forked, so it might not be up to date./Frej
+
+### Transaction Report Extended
+
 **Description**: Based on the built-in transaction report, it provides these additional features:
 + a Sort by Substring option which includes a regular expression match similar to the one offered for the transaction filter. That feature is the generic version of the Transaction Report with Tags.
 + a new option on the display tab called "Use More Permissive Match for Other Account Name and Code". This option enables a more permissive match for the other account name and code in order to reduce the number of "split transaction" account names with multisplits.
-
-### Transaction Report with Tags
-
-**Filename**: transaction-tags.scm
-
-**Description**: An earlier version of transaction-extended.scm that focusses on Sort by tags specifically. It was releases as a proof-of-concept to provide some basic features related to the long-discussed request of being able to use orthogonal categories, classes, tags or "analytical dimensions" to retrieve and group transactions across several general ledger accounts. See https://bugs.gnucash.org/show_bug.cgi?id=113772
-
-**Limitations**: This custom report is not a feature-rich solution. It only provides one type of report (similar to the existing transaction report) and does not provide any feature to "bulk manage" existing or future user-defined tags. So there is no feature to bulk rename, bulk move or bulk delete tags for instance. All changes to the data file (adding and changing tags) are done manually by the user. This feature only provides a custom report that uses tags as created by the user.
-
-## Report Features 
-
-### Transaction Report Extended
 
 (TO DO. But it basically works similar to "Transaction Report with Tags", but with capability of searching for any string.)
 
