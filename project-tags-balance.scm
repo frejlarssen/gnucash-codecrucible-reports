@@ -54,7 +54,7 @@
 
 ;; Special accounts for project reallocations
 (define ptb:realloc-expense-account-name "Expenses:Project Reallocations")
-(define ptb:realloc-income-account-name "Incomes:Project Reallocations")
+(define ptb:realloc-income-account-name "Income:Project Reallocations")
 
 (define (ptb:realloc-expense-account? account)
   (string=? (gnc-account-get-full-name account) ptb:realloc-expense-account-name))
