@@ -267,7 +267,11 @@
           (else
            (xaccQueryAddDateMatchTT query #t begindate #t enddate QOF-QUERY-AND)))
 
-        (let* ((splits (qof-query-run query)))
+        (let* ((splits (qof-query-run query))
+               (untagged-income ptb:zero)
+               (untagged-expense ptb:zero)
+               (untagged-realloc-income ptb:zero)
+               (untagged-realloc-expense ptb:zero))
           (qof-query-destroy query)
 
           ;; Filter splits to income/expense accounts and with project tags.
@@ -360,6 +364,26 @@
                              (gnc:make-html-text balance-mon)))))
                        sorted-projects)
 
+                      ;; Row for income/expenses without project tag
+                      (let* ((commodity (xaccAccountGetCommodity
+                                         (xaccSplitGetAccount (car splits))))
+                             (untagged-balance (ptb:n- (ptb:n+ untagged-income untagged-realloc-income)
+                                                       (ptb:n+ untagged-expense untagged-realloc-expense)))
+                             (untagged-income-mon (gnc:make-gnc-monetary commodity untagged-income))
+                             (untagged-expense-mon (gnc:make-gnc-monetary commodity untagged-expense))
+                             (untagged-realloc-income-mon (gnc:make-gnc-monetary commodity untagged-realloc-income))
+                             (untagged-realloc-expense-mon (gnc:make-gnc-monetary commodity untagged-realloc-expense))
+                             (untagged-balance-mon (gnc:make-gnc-monetary commodity untagged-balance)))
+                        (gnc:html-table-append-row!
+                         table
+                         (list
+                          (ptb:total-label-cell (G_ "No project tag"))
+                          (ptb:total-number-cell untagged-income-mon)
+                          (ptb:total-number-cell untagged-expense-mon)
+                          (ptb:total-number-cell untagged-realloc-income-mon)
+                          (ptb:total-number-cell untagged-realloc-expense-mon)
+                          (ptb:total-number-cell untagged-balance-mon))))
+
                       ;; Grand total row
                       (let* ((commodity (xaccAccountGetCommodity
                                          (xaccSplitGetAccount (car splits))))
@@ -410,39 +434,44 @@
                        (rest (cdr remaining))
                        (account (xaccSplitGetAccount split)))
                   (if (ptb:income-or-expense? account)
-                      (let ((tag (ptb:extract-project-tag split project-tag-prefix)))
+                      (let* ((tag (ptb:extract-project-tag split project-tag-prefix))
+                             (raw-amount (xaccSplitGetAmount split))
+                             (type (xaccAccountGetType account))
+                             (income-delta ptb:zero)
+                             (expense-delta ptb:zero)
+                             (realloc-income-delta ptb:zero)
+                             (realloc-expense-delta ptb:zero))
+                        (cond
+                         ((ptb:realloc-income-account? account)
+                          (set! realloc-income-delta
+                                (if (eq? type ACCT-TYPE-INCOME)
+                                    (gnc-numeric-neg raw-amount)
+                                    ptb:zero)))
+                         ((ptb:realloc-expense-account? account)
+                          (set! realloc-expense-delta
+                                (if (eq? type ACCT-TYPE-EXPENSE)
+                                    raw-amount
+                                    ptb:zero)))
+                         (else
+                          (set! income-delta
+                                (if (eq? type ACCT-TYPE-INCOME)
+                                    (gnc-numeric-neg raw-amount)
+                                    ptb:zero))
+                          (set! expense-delta
+                                (if (eq? type ACCT-TYPE-EXPENSE)
+                                    raw-amount
+                                    ptb:zero))))
                         (if tag
-                            (let* ((raw-amount (xaccSplitGetAmount split))
-                                   (type (xaccAccountGetType account))
-                                   (income-delta ptb:zero)
-                                   (expense-delta ptb:zero)
-                                   (realloc-income-delta ptb:zero)
-                                   (realloc-expense-delta ptb:zero))
-                              (cond
-                               ((ptb:realloc-income-account? account)
-                                (set! realloc-income-delta
-                                      (if (eq? type ACCT-TYPE-INCOME)
-                                          (gnc-numeric-neg raw-amount)
-                                          ptb:zero)))
-                               ((ptb:realloc-expense-account? account)
-                                (set! realloc-expense-delta
-                                      (if (eq? type ACCT-TYPE-EXPENSE)
-                                          raw-amount
-                                          ptb:zero)))
-                               (else
-                                (set! income-delta
-                                      (if (eq? type ACCT-TYPE-INCOME)
-                                          (gnc-numeric-neg raw-amount)
-                                          ptb:zero))
-                                (set! expense-delta
-                                      (if (eq? type ACCT-TYPE-EXPENSE)
-                                          raw-amount
-                                          ptb:zero))))
-                              (let ((updated (alist-inc! project->amount
-                                                         tag income-delta expense-delta
-                                                         realloc-income-delta realloc-expense-delta)))
-                                (loop rest updated)))
-                            (loop rest project->amount)))
+                            (let ((updated (alist-inc! project->amount
+                                                       tag income-delta expense-delta
+                                                       realloc-income-delta realloc-expense-delta)))
+                              (loop rest updated))
+                            (begin
+                              (set! untagged-income (ptb:n+ untagged-income income-delta))
+                              (set! untagged-expense (ptb:n+ untagged-expense expense-delta))
+                              (set! untagged-realloc-income (ptb:n+ untagged-realloc-income realloc-income-delta))
+                              (set! untagged-realloc-expense (ptb:n+ untagged-realloc-expense realloc-expense-delta))
+                              (loop rest project->amount))))
                       (loop rest project->amount)))))))))
 
     (gnc:report-finished)
