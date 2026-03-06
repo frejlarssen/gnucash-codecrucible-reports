@@ -79,6 +79,12 @@
 (define (ptb:header-cell label)
   (gnc:make-html-table-cell/markup "number-header" label))
 
+(define (ptb:text-cell value)
+  (gnc:make-html-table-cell/markup "text-cell" value))
+
+(define (ptb:number-cell value)
+  (gnc:make-html-table-cell/markup "number-cell" value))
+
 (define (ptb:total-label-cell label)
   (gnc:make-html-table-cell/markup "total-label-cell" label))
 
@@ -356,12 +362,12 @@
                            (gnc:html-table-append-row!
                             table
                             (list
-                             (gnc:make-html-text display-name)
-                             (gnc:make-html-text income-mon)
-                             (gnc:make-html-text expense-mon)
-                             (gnc:make-html-text realloc-income-mon)
-                             (gnc:make-html-text realloc-expense-mon)
-                             (gnc:make-html-text balance-mon)))))
+                             (ptb:text-cell display-name)
+                             (ptb:number-cell income-mon)
+                             (ptb:number-cell expense-mon)
+                             (ptb:number-cell realloc-income-mon)
+                             (ptb:number-cell realloc-expense-mon)
+                             (ptb:number-cell balance-mon)))))
                        sorted-projects)
 
                       ;; Total row for income/expenses with project tag
