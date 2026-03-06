@@ -52,6 +52,16 @@
 ;; Default project tag prefix
 (define def:project-tag-prefix "#P-")
 
+;; Special accounts for project reallocations
+(define ptb:realloc-expense-account-name "Expenses:Project Reallocations")
+(define ptb:realloc-income-account-name "Incomes:Project Reallocations")
+
+(define (ptb:realloc-expense-account? account)
+  (string=? (gnc-account-get-full-name account) ptb:realloc-expense-account-name))
+
+(define (ptb:realloc-income-account? account)
+  (string=? (gnc-account-get-full-name account) ptb:realloc-income-account-name))
+
 ;; Helper: simple association helpers
 
 ;; Numeric helpers for gnc-numeric values.
@@ -75,18 +85,43 @@
 (define (ptb:total-number-cell value)
   (gnc:make-html-table-cell/markup "total-number-cell" value))
 
-;; table: alist of (project-tag . (income . expense))
-(define (alist-inc! table key income-delta expense-delta)
+;; Per-project accumulator helpers.
+;; For each project tag we keep a list of four gnc-numeric values:
+;; (income expense realloc-income realloc-expense)
+
+(define (ptb:make-totals income expense realloc-income realloc-expense)
+  (list income expense realloc-income realloc-expense))
+
+(define (ptb:totals-income totals)
+  (list-ref totals 0))
+
+(define (ptb:totals-expense totals)
+  (list-ref totals 1))
+
+(define (ptb:totals-realloc-income totals)
+  (list-ref totals 2))
+
+(define (ptb:totals-realloc-expense totals)
+  (list-ref totals 3))
+
+;; table: alist of (project-tag . (income expense realloc-income realloc-expense))
+(define (alist-inc! table key income-delta expense-delta realloc-income-delta realloc-expense-delta)
   (let ((existing (assoc key table)))
     (if existing
         (let* ((cur (cdr existing))
-               (cur-income (car cur))
-               (cur-expense (cdr cur)))
-          (set-cdr! existing
-                    (cons (ptb:n+ cur-income income-delta)
-                          (ptb:n+ cur-expense expense-delta)))
+               (new (ptb:make-totals
+                     (ptb:n+ (ptb:totals-income cur) income-delta)
+                     (ptb:n+ (ptb:totals-expense cur) expense-delta)
+                     (ptb:n+ (ptb:totals-realloc-income cur) realloc-income-delta)
+                     (ptb:n+ (ptb:totals-realloc-expense cur) realloc-expense-delta))))
+          (set-cdr! existing new)
           table)
-        (cons (cons key (cons income-delta expense-delta)) table))))
+        (let ((initial (ptb:make-totals
+                        income-delta
+                        expense-delta
+                        realloc-income-delta
+                        realloc-expense-delta)))
+          (cons (cons key initial) table)))))
 
 ;; Helper: find first project tag matching the prefix in split/transaction.
 ;; Small, self-contained version inspired by transaction-tags.scm.
@@ -236,9 +271,9 @@
           (qof-query-destroy query)
 
           ;; Filter splits to income/expense accounts and with project tags.
-          ;; Accumulate per-project income and expense separately.
+          ;; Accumulate per-project income, expense and reallocations separately.
           (let loop ((remaining splits)
-                     (project->amount '()))    ; (project . (income . expense))
+                     (project->amount '()))    ; (project . (income expense realloc-income realloc-expense))
             (if (null? remaining)
                 ;; done
                 (if (null? project->amount)
@@ -256,7 +291,9 @@
                                     (string<? (car a) (car b)))))
                            (table (gnc:make-html-table))
                            (grand-income (gnc-numeric-zero))
-                           (grand-expense (gnc-numeric-zero)))
+                           (grand-expense (gnc-numeric-zero))
+                           (grand-realloc-income (gnc-numeric-zero))
+                           (grand-realloc-expense (gnc-numeric-zero)))
                       ;; Title and date range
                       (gnc:html-document-set-title! document report-title)
 
@@ -281,6 +318,8 @@
                         (ptb:header-cell (G_ "Project"))
                         (ptb:header-cell (G_ "Income"))
                         (ptb:header-cell (G_ "Expenses"))
+                        (ptb:header-cell (G_ "Reallocations In"))
+                        (ptb:header-cell (G_ "Reallocations Out"))
                         (ptb:header-cell (G_ "Balance"))))
 
                       ;; Rows
@@ -288,9 +327,12 @@
                        (lambda (entry)
                          (let* ((raw-name (car entry))
                                 (totals (cdr entry))
-                                (income (car totals))
-                                (expense (cdr totals))
-                                (balance (ptb:n- income expense))
+                                (income (ptb:totals-income totals))
+                                (expense (ptb:totals-expense totals))
+                                (realloc-income (ptb:totals-realloc-income totals))
+                                (realloc-expense (ptb:totals-realloc-expense totals))
+                                (balance (ptb:n- (ptb:n+ income realloc-income)
+                                                 (ptb:n+ expense realloc-expense)))
                                 (display-name
                                  (if (and strip-prefix?
                                           (string-prefix? project-tag-prefix raw-name))
@@ -300,24 +342,33 @@
                                             (xaccSplitGetAccount (car splits))))
                                 (income-mon (gnc:make-gnc-monetary commodity income))
                                 (expense-mon (gnc:make-gnc-monetary commodity expense))
+                                (realloc-income-mon (gnc:make-gnc-monetary commodity realloc-income))
+                                (realloc-expense-mon (gnc:make-gnc-monetary commodity realloc-expense))
                                 (balance-mon (gnc:make-gnc-monetary commodity balance)))
                            (set! grand-income (ptb:n+ grand-income income))
                            (set! grand-expense (ptb:n+ grand-expense expense))
+                           (set! grand-realloc-income (ptb:n+ grand-realloc-income realloc-income))
+                           (set! grand-realloc-expense (ptb:n+ grand-realloc-expense realloc-expense))
                            (gnc:html-table-append-row!
                             table
                             (list
                              (gnc:make-html-text display-name)
                              (gnc:make-html-text income-mon)
                              (gnc:make-html-text expense-mon)
+                             (gnc:make-html-text realloc-income-mon)
+                             (gnc:make-html-text realloc-expense-mon)
                              (gnc:make-html-text balance-mon)))))
                        sorted-projects)
 
                       ;; Grand total row
                       (let* ((commodity (xaccAccountGetCommodity
                                          (xaccSplitGetAccount (car splits))))
-                             (grand-balance (ptb:n- grand-income grand-expense))
+                             (grand-balance (ptb:n- (ptb:n+ grand-income grand-realloc-income)
+                                                    (ptb:n+ grand-expense grand-realloc-expense)))
                              (grand-income-mon (gnc:make-gnc-monetary commodity grand-income))
                              (grand-expense-mon (gnc:make-gnc-monetary commodity grand-expense))
+                             (grand-realloc-income-mon (gnc:make-gnc-monetary commodity grand-realloc-income))
+                             (grand-realloc-expense-mon (gnc:make-gnc-monetary commodity grand-realloc-expense))
                              (grand-balance-mon (gnc:make-gnc-monetary commodity grand-balance)))
                         (gnc:html-table-append-row!
                          table
@@ -325,6 +376,8 @@
                           (ptb:total-label-cell (G_ "Total"))
                           (ptb:total-number-cell grand-income-mon)
                           (ptb:total-number-cell grand-expense-mon)
+                          (ptb:total-number-cell grand-realloc-income-mon)
+                          (ptb:total-number-cell grand-realloc-expense-mon)
                           (ptb:total-number-cell grand-balance-mon))))
 
                       (gnc:html-document-add-object! document table)
@@ -334,20 +387,25 @@
                                (map (lambda (entry)
                                       (let* ((raw-name (car entry))
                                              (totals (cdr entry))
-                                             (income (car totals))
-                                             (expense (cdr totals))
-                                             (balance (ptb:n- income expense))
+                                             (income (ptb:totals-income totals))
+                                             (expense (ptb:totals-expense totals))
+                                             (realloc-income (ptb:totals-realloc-income totals))
+                                             (realloc-expense (ptb:totals-realloc-expense totals))
+                                             (balance (ptb:n- (ptb:n+ income realloc-income)
+                                                              (ptb:n+ expense realloc-expense)))
                                              (commodity (xaccAccountGetCommodity
                                                          (xaccSplitGetAccount (car splits))))
                                              (income-mon (gnc:make-gnc-monetary commodity income))
                                              (expense-mon (gnc:make-gnc-monetary commodity expense))
+                                             (realloc-income-mon (gnc:make-gnc-monetary commodity realloc-income))
+                                             (realloc-expense-mon (gnc:make-gnc-monetary commodity realloc-expense))
                                              (balance-mon (gnc:make-gnc-monetary commodity balance)))
-                                        (list raw-name income-mon expense-mon balance-mon)))
+                                        (list raw-name income-mon expense-mon realloc-income-mon realloc-expense-mon balance-mon)))
                                     sorted-projects)))
                           (gnc:html-document-set-export-string
                            document
                            (gnc:lists->csv
-                            (cons '("project" "income" "expenses" "balance") rows)))))))
+                            (cons '("project" "income" "expenses" "reallocations_in" "reallocations_out" "balance") rows)))))))
                 (let* ((split (car remaining)) ; if remaining is not null
                        (rest (cdr remaining))
                        (account (xaccSplitGetAccount split)))
@@ -356,15 +414,34 @@
                         (if tag
                             (let* ((raw-amount (xaccSplitGetAmount split))
                                    (type (xaccAccountGetType account))
-                                   (income-delta (if (eq? type ACCT-TYPE-INCOME)
-                                                     (gnc-numeric-neg raw-amount)
-                                                     ptb:zero))
-                                   (expense-delta (if (eq? type ACCT-TYPE-EXPENSE)
-                                                      raw-amount
-                                                      ptb:zero))
-                                   (updated (alist-inc! project->amount
-                                                        tag income-delta expense-delta)))
-                              (loop rest updated))
+                                   (income-delta ptb:zero)
+                                   (expense-delta ptb:zero)
+                                   (realloc-income-delta ptb:zero)
+                                   (realloc-expense-delta ptb:zero))
+                              (cond
+                               ((ptb:realloc-income-account? account)
+                                (set! realloc-income-delta
+                                      (if (eq? type ACCT-TYPE-INCOME)
+                                          (gnc-numeric-neg raw-amount)
+                                          ptb:zero)))
+                               ((ptb:realloc-expense-account? account)
+                                (set! realloc-expense-delta
+                                      (if (eq? type ACCT-TYPE-EXPENSE)
+                                          raw-amount
+                                          ptb:zero)))
+                               (else
+                                (set! income-delta
+                                      (if (eq? type ACCT-TYPE-INCOME)
+                                          (gnc-numeric-neg raw-amount)
+                                          ptb:zero))
+                                (set! expense-delta
+                                      (if (eq? type ACCT-TYPE-EXPENSE)
+                                          raw-amount
+                                          ptb:zero))))
+                              (let ((updated (alist-inc! project->amount
+                                                         tag income-delta expense-delta
+                                                         realloc-income-delta realloc-expense-delta)))
+                                (loop rest updated)))
                             (loop rest project->amount)))
                       (loop rest project->amount)))))))))
 
