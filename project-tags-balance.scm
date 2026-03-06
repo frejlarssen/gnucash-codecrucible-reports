@@ -364,27 +364,7 @@
                              (gnc:make-html-text balance-mon)))))
                        sorted-projects)
 
-                      ;; Row for income/expenses without project tag
-                      (let* ((commodity (xaccAccountGetCommodity
-                                         (xaccSplitGetAccount (car splits))))
-                             (untagged-balance (ptb:n- (ptb:n+ untagged-income untagged-realloc-income)
-                                                       (ptb:n+ untagged-expense untagged-realloc-expense)))
-                             (untagged-income-mon (gnc:make-gnc-monetary commodity untagged-income))
-                             (untagged-expense-mon (gnc:make-gnc-monetary commodity untagged-expense))
-                             (untagged-realloc-income-mon (gnc:make-gnc-monetary commodity untagged-realloc-income))
-                             (untagged-realloc-expense-mon (gnc:make-gnc-monetary commodity untagged-realloc-expense))
-                             (untagged-balance-mon (gnc:make-gnc-monetary commodity untagged-balance)))
-                        (gnc:html-table-append-row!
-                         table
-                         (list
-                          (ptb:total-label-cell (G_ "No project tag"))
-                          (ptb:total-number-cell untagged-income-mon)
-                          (ptb:total-number-cell untagged-expense-mon)
-                          (ptb:total-number-cell untagged-realloc-income-mon)
-                          (ptb:total-number-cell untagged-realloc-expense-mon)
-                          (ptb:total-number-cell untagged-balance-mon))))
-
-                      ;; Grand total row
+                      ;; Total row for income/expenses with project tag
                       (let* ((commodity (xaccAccountGetCommodity
                                          (xaccSplitGetAccount (car splits))))
                              (grand-balance (ptb:n- (ptb:n+ grand-income grand-realloc-income)
@@ -403,6 +383,26 @@
                           (ptb:total-number-cell grand-realloc-income-mon)
                           (ptb:total-number-cell grand-realloc-expense-mon)
                           (ptb:total-number-cell grand-balance-mon))))
+
+                          ;; Row for income/expenses without project tag
+                          (let* ((commodity (xaccAccountGetCommodity
+                                             (xaccSplitGetAccount (car splits))))
+                                 (untagged-balance (ptb:n- (ptb:n+ untagged-income untagged-realloc-income)
+                                                           (ptb:n+ untagged-expense untagged-realloc-expense)))
+                                 (untagged-income-mon (gnc:make-gnc-monetary commodity untagged-income))
+                                 (untagged-expense-mon (gnc:make-gnc-monetary commodity untagged-expense))
+                                 (untagged-realloc-income-mon (gnc:make-gnc-monetary commodity untagged-realloc-income))
+                                 (untagged-realloc-expense-mon (gnc:make-gnc-monetary commodity untagged-realloc-expense))
+                                 (untagged-balance-mon (gnc:make-gnc-monetary commodity untagged-balance)))
+                            (gnc:html-table-append-row!
+                             table
+                             (list
+                              (ptb:total-label-cell (G_ "No project tag"))
+                              (ptb:total-number-cell untagged-income-mon)
+                              (ptb:total-number-cell untagged-expense-mon)
+                              (ptb:total-number-cell untagged-realloc-income-mon)
+                              (ptb:total-number-cell untagged-realloc-expense-mon)
+                              (ptb:total-number-cell untagged-balance-mon))))
 
                       (gnc:html-document-add-object! document table)
 
