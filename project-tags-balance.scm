@@ -62,6 +62,8 @@
 (define (ptb:realloc-income-account? account)
   (string=? (gnc-account-get-full-name account) ptb:realloc-income-account-name))
 
+(define no-project-tag-style "primary-subheading")
+
 ;; Helper: simple association helpers
 
 ;; Numeric helpers for gnc-numeric values.
@@ -401,7 +403,7 @@
                                  (untagged-realloc-expense-mon (gnc:make-gnc-monetary commodity untagged-realloc-expense))
                                  (untagged-balance-mon (gnc:make-gnc-monetary commodity untagged-balance)))
                            (gnc:html-table-append-row/markup!
-                            table "grand-total"
+                            table no-project-tag-style
                             (list
                              (ptb:total-label-cell (G_ "No project tag"))
                              (ptb:total-number-cell untagged-income-mon)
