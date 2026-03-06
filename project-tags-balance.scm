@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; project-tags-balance.scm : Project tag balance report
+;; project-tags-balance.scm : Project balance report
 ;;
-;; Summarises income and expenses per project tag, where projects
+;; Summarises income and expenses per project, where projects
 ;; are identified by tags like #P-general, #P-FEB2026 attached
 ;; to transaction descriptions, notes or split memos.
 ;;
@@ -489,7 +489,7 @@
 
 (gnc:define-report
  'version 1
- 'name (N_ "Project Tag Balance")
+ 'name (N_ "Project Balance")
  'report-guid "5beff7158aec4f27b26f7235e6015a8e"
  'menu-path (list gnc:menuname-experimental)
  'options-generator ptb:options-generator
