@@ -111,6 +111,22 @@ This report expects two accounts `Income:Project Reallocations` and `Expenses:Pr
 
 Do the same for `Expenses`.
 
+For example, if the project #P-2025Aug has 0 incomes and 3000 ksh expenses, it's balance would be -3000. When the #P-2025Aug program is over, we must therefore reallocate 3000 ksh from #P-general to #P-2025Aug, to make the balance 0.
+
+<figure>
+    <img src="images/reallocation_transaction.png"
+         alt="3000 ksh from #P-general to #P-2025Aug.">
+    <figcaption>Figure 5: 3000 ksh from #P-general to #P-2025Aug.</figcaption>
+</figure>
+
+The Project Balance report now looks like this:
+
+<figure>
+    <img src="images/project_balance_report.png"
+         alt="3000 ksh from #P-general to #P-2025Aug.">
+    <figcaption>Figure 6: #P-2025Aug is cleared.</figcaption>
+</figure>
+
 ## Report Features
 
 Disclaimer: Some of this is from the repository I forked, so it might not be up to date./Frej
