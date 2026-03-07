@@ -2,8 +2,8 @@
 
 * [Motivation](#motivation)
 * [GnuCash](#gnucash)
-* [Reports](#reports)
 * [Installation](#installation)
+* [The reports](#the-reports)
 
 ## Motivation
 
@@ -25,7 +25,7 @@ CodeCrucible runs multiple programs, for example one in August 2025 and one in D
     <figcaption>Figure 2: Bad example.</figcaption>
 </figure>
 
-Instead, we want to organize the account tree as in Figure 1. We differ between accounts when we do transactions by "tagging" them in the description:
+Instead, we want to organize the account tree as in Figure 1. We differ between projects when we do transactions by "tagging" them in the description:
 
 <figure>
     <img src="images/transactions.png"
@@ -38,8 +38,6 @@ The reports in this file allows us to use these tags to see total expenses for t
 ## GnuCash
 
 Make sure you download [GnuCash](https://gnucash.org) and learn the basics, for example using the tutorial.
-
-## Reports
 
 This is repository contains custom reports for GnuCash 5, customized for CodeCrucible.
 
