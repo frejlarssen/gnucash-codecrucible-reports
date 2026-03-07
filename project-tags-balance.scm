@@ -32,8 +32,7 @@
 ;; Basic option names reused from the transaction report
 
 (define optname-accounts (N_ "Accounts"))
-(define optname-startdate (N_ "Start Date"))
-(define optname-enddate (N_ "End Date"))
+(define optname-date (N_ "Report Date"))
 (define optname-date-source (N_ "Date Filter"))
 (define optname-table-export (N_ "Table for Exporting"))
 (define optname-infobox-display (N_ "Add options summary"))
@@ -164,8 +163,8 @@
   (let ((options (gnc-new-optiondb)))
 
     ;; General/date options
-    (gnc:options-add-date-interval!
-     options gnc:pagename-general optname-startdate optname-enddate "a")
+    (gnc:options-add-report-date!
+     options gnc:pagename-general optname-date "a")
 
     (gnc-register-multichoice-option options
       gnc:pagename-general optname-date-source
@@ -235,12 +234,9 @@
 
   (let* ((document (gnc:make-html-document))
          (accounts (opt-val gnc:pagename-accounts optname-accounts))
-         (begindate (gnc:time64-start-day-time
-                     (gnc:date-option-absolute-time
-                      (opt-val gnc:pagename-general optname-startdate))))
-         (enddate (gnc:time64-end-day-time
-                   (gnc:date-option-absolute-time
-                    (opt-val gnc:pagename-general optname-enddate))))
+         (reportdate (gnc:time64-end-day-time
+                      (gnc:date-option-absolute-time
+                       (opt-val gnc:pagename-general optname-date))))
          (date-source (opt-val gnc:pagename-general optname-date-source))
          (infobox-display (opt-val gnc:pagename-general optname-infobox-display))
          (report-title (opt-val gnc:pagename-general gnc:optname-reportname))
@@ -264,16 +260,16 @@
         (qof-query-set-book query book)
         (xaccQueryAddAccountMatch query accounts QOF-GUID-MATCH-ANY QOF-QUERY-AND)
 
-        ;; Date filter: only support posted and entered here, like the transaction report
+        ;; Date filter: include all splits up to and including reportdate (as-of date)
         (case date-source
           ((posted)
-           (xaccQueryAddDateMatchTT query #t begindate #t enddate QOF-QUERY-AND))
+           (xaccQueryAddDateMatchTT query #t 0 #t reportdate QOF-QUERY-AND))
           ((entered)
-           (xaccQueryAddDateEnteredMatchTT query #t begindate #t enddate QOF-QUERY-AND))
+           (xaccQueryAddDateEnteredMatchTT query #t 0 #t reportdate QOF-QUERY-AND))
           ((reconciled)
-           (xaccQueryAddReconcileDateMatchTT query #t begindate #t enddate QOF-QUERY-AND))
+           (xaccQueryAddReconcileDateMatchTT query #t 0 #t reportdate QOF-QUERY-AND))
           (else
-           (xaccQueryAddDateMatchTT query #t begindate #t enddate QOF-QUERY-AND)))
+           (xaccQueryAddDateMatchTT query #t 0 #t reportdate QOF-QUERY-AND)))
 
         (let* ((splits (qof-query-run query))
                (untagged-income ptb:zero)
@@ -314,9 +310,8 @@
                        (gnc:make-html-text
                         (gnc:html-markup-h3
                          (format #f
-                                 (G_ "From ~a to ~a")
-                                 (qof-print-date begindate)
-                                 (qof-print-date enddate)))))
+                                 (G_ "As of ~a")
+                                 (qof-print-date reportdate)))))
 
                       (when (eq? infobox-display 'always)
                         (gnc:html-document-add-object!
