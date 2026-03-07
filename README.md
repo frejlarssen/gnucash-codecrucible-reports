@@ -53,8 +53,6 @@ The reports are:
 
 ## Installation
 
-The specific instructions below on how to load custom reports are based on more generic instructions available on the [wiki](https://wiki.gnucash.org/wiki/Custom_Reports#Loading_Your_Report). Check there if something doesn't work.
-
 The commands in this guide assumes you are using Linux, but the steps for other operating systems should be similar.
 
 ### Step 1. Clone this repository
@@ -69,7 +67,7 @@ Enter the repository with
 cd gnucash-codecrucible-reports
 ```
 
-### Step 1.5. Setup using setup file
+### Step 2. Setup using setup file
 
 Give yourself permission to execute `setup.sh`:
 
@@ -83,44 +81,9 @@ Run the file `setup.sh`:
 ./setup.sh
 ```
 
-If this didn't work, do it manually as in Step 2.
+If this didn't work, do it manually following [these](./docs/manual-setup.md) steps.
 
-### Step 2. Link the files
-
-
-1. Start GnuCash
-2. Go to menu Help - About
-![alt text](images/about.png)
-3. In the About GnuCash dialog, locate the entry for **GNC_USERDATA_DIR**. It's the first entry in the list. Copy the link.
-
-4. Replace `{GNC_USERDATA_DIR}` with the path you copied and run the command below to create a link to the file:
-
-    ```bash
-    ln -s $(pwd)/transaction-extended.scm {GNC_USERDATA_DIR}/transaction-extended.scm
-    ```
-
-    while standing in the folder `gnucash-codecrucible-reports`.
-    (If you copied the path by right clicking, make sure to remove `file://` so that the path starts with `/home`.)
-
-    On my system, the full command is:
-
-    ```bash
-    ln -s "$(pwd)/transaction-extended.scm" ~/.local/share/gnucash/transaction-extended.scm
-    ```
-
-### Step 3. Edit config file
-
-Go back to the _About GnuCash_ dialog from Step 2. 
-
-This time locate the second entry **GNC_USERCONFIG_DIR**. Click on the link to open the directory.
-
-If there is **already** an existing file called _config-user.scm_ in the directory, then you need to edit that file and add whichever of these lines match the report(s) you want to enable:
-
-`(load (gnc-build-userdata-path "transaction-extended.scm"))`
-
-If there **isn't** a file called _config-user.scm_ in that directory, then you can either create one and put the above line in it or you can simply use the file that came with the zip file.
-
-### Step 5. Restart GnuCash
+### Step 3. Restart GnuCash
 
 After restarting GnuCash, the custom "Transaction Report Extended" should be available under the Reports - Experimental menu.
 
