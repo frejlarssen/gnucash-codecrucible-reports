@@ -140,6 +140,16 @@ Open the options and select accounts and date similar to the normal transaction 
 
 **Description**: Shows an overview over all projects. It shows the Incomes, Expenses, Reallocations between projects and the projects balance (Income - Expenses + Reallocations in - Reallocations out).
 
+This report expects two accounts `Income:Project Reallocations` and `Expenses:Project Reallocations`. Add them like you would add any account. Right click on the `Income` account and fill in:
+
+<figure>
+    <img src="images/project_reallocations.png"
+         alt="Project Reallocations">
+    <figcaption>Figure 4: Adding Project reallocations to Income.</figcaption>
+</figure>
+
+Do the same for `Expenses`.
+
 ## Report Features
 
 Disclaimer: Some of this is from the repository I forked, so it might not be up to date./Frej
