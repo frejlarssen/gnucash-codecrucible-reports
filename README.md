@@ -47,6 +47,8 @@ The reports are:
 
 * Project Balance (`project-tags-balance.scm`)
 
+* Budget Report Extended (`budget-extended.scm`)
+
 (More fancy ones will be added later. (Pie-charts etc would be cool.))
 
 ## Installation
@@ -126,6 +128,12 @@ The Project Balance report now looks like this:
          alt="3000 ksh from #P-general to #P-2025Aug.">
     <figcaption>Figure 6: #P-2025Aug is cleared.</figcaption>
 </figure>
+
+### Budget Report Extended
+
+**Filename**: budget-extended.scm
+
+**Description**: Like the built-in Budget Report, but you can filter the **Actual** (and Difference) column by a project tag (e.g. `#P-2025Aug`). The Budget column is unchanged. Optionally, "Link to actual transactions" opens the Transaction Report with the same project filter pre-filled.
 
 ## Report Features
 
