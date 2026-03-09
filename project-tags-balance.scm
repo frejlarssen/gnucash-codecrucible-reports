@@ -486,7 +486,7 @@
  'version 1
  'name (N_ "CC Project Balance")
  'report-guid "5beff7158aec4f27b26f7235e6015a8e"
- 'menu-path (list gnc:menuname-experimental)
+ 'menu-path (list gnc:menuname-asset-liability)
  'options-generator ptb:options-generator
  'renderer ptb:renderer)
 
