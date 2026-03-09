@@ -4,8 +4,10 @@
 echo "Setting up the custom reports for GnuCash"
 echo "----------------------------------------"
 
+#Is (use-modules (sw_core_utils)) required in config-user.scm?
+
 # List of reports to link and add to config-user.scm
-reports=("transaction-extended.scm" "account-piecharts-extended.scm" "project-tags-balance.scm" "budget-extended.scm")
+reports=("cc-transaction.scm" "cc-account-piecharts.scm" "cc-project-balance.scm" "cc-budget-report.scm")
 
 echo "Linking the files to the userdata directory"
 GNC_USERDATA_DIR=$(gnucash --paths | grep GNC_USERDATA_DIR | awk '{print $2}')
@@ -18,7 +20,7 @@ for report in "${reports[@]}"; do
         rm $GNC_USERDATA_DIR/$report
     fi
     echo "  Linking $report to GNC_USERDATA_DIR, creating a new link"
-    ln -s "$(pwd)/$report" $GNC_USERDATA_DIR/$report
+    ln -s "$(pwd)/reports/$report" $GNC_USERDATA_DIR/$report
 done
 
 echo "Adding the loading lines to the config-user.scm file"
