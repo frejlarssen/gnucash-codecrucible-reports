@@ -1,11 +1,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; transaction-extended.scm : custom report to extend the
-;; standard transaction report
-;; Additional features:
-;; + Sort and Group by Substring
+;; Based on:
+;; transaction-extended.scm
+;; https://github.com/dawansv/gnucash-custom-reports
+;; by Vincent Dawans <dawansv@gmail.com>
 ;;
-;; Custom report by Vincent Dawans <dawansv@gmail.com>
-;; Based on built-in trep-engine.scm
+;; Modified by Code Crucible to add CC-specific features.
 ;;
 ;; This program is free software; you can redistribute it and/or    
 ;; modify it under the terms of the GNU General Public License as   
@@ -2914,8 +2913,8 @@ Default is [No Match]/[Empty String].")
 
 (gnc:define-report
  'version 1
- 'name (N_ "Transaction Report Extended")
+ 'name (N_ "CC Transaction Report")
  'report-guid "be95308cb184424ea4e17b1ab8aad71e"
- 'menu-path (list gnc:menuname-experimental)
+ ; Menu path is root by default.
  'options-generator trep-extended-options-generator
  'renderer trep-extended-renderer)

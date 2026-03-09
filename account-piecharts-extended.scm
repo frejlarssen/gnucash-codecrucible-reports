@@ -34,11 +34,11 @@
 (use-modules (ice-9 format))
 (use-modules (ice-9 regex))
 
-(define menuname-income (N_ "Income Piechart Extended"))
-(define menuname-expense (N_ "Expense Piechart Extended"))
-(define menuname-assets (N_ "Asset Piechart Extended"))
-(define menuname-securities (N_ "Security Piechart Extended"))
-(define menuname-liabilities (N_ "Liability Piechart Extended"))
+(define menuname-income (N_ "CC Income Piechart"))
+(define menuname-expense (N_ "CC Expense Piechart"))
+(define menuname-assets (N_ "CC Asset Piechart"))
+(define menuname-securities (N_ "CC Security Piechart"))
+(define menuname-liabilities (N_ "CC Liability Piechart"))
 ;; The names are used in the menu
 
 ;; The menu statusbar tips.
@@ -57,11 +57,11 @@ balance at a given time. Extended with tags."))
 ;; The names here are used 1. for internal identification, 2. as
 ;; tab labels, 3. as default for the 'Report name' option which
 ;; in turn is used for the printed report title.
-(define reportname-income (N_ "Income Accounts Extended"))
-(define reportname-expense (N_ "Expense Accounts Extended"))
-(define reportname-assets (N_ "Assets Extended"))
-(define reportname-securities (N_ "Securities Extended"))
-(define reportname-liabilities (N_ "Liabilities Extended"))
+(define reportname-income (N_ "CC Income Accounts"))
+(define reportname-expense (N_ "CC Expense Accounts"))
+(define reportname-assets (N_ "CC Assets"))
+(define reportname-securities (N_ "CC Securities"))
+(define reportname-liabilities (N_ "CC Liabilities"))
 (define report-guid-expense "adb97fce85e64f9c9a832ee15f488b1d")
 
 (define optname-from-date (N_ "Start Date"))
@@ -711,7 +711,9 @@ balance at a given time. Extended with tags."))
     'version 1
     'name name
     'report-guid uuid
-    'menu-path (list gnc:menuname-experimental)
+    'menu-path (if income-expense?
+                   (list gnc:menuname-income-expense)
+                   (list gnc:menuname-asset-liability))
     'menu-name menuname
     'menu-tip menutip
     'options-generator (lambda () (options-generator acct-types

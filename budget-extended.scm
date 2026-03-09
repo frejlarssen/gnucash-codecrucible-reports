@@ -39,7 +39,7 @@
 
 (define trep-uuid "2fe3b9833af044abb929a88d5a59620f")
 
-(define reportname (N_ "Budget Report Extended"))
+(define reportname (N_ "CC Budget Report"))
 
 ;; define all option's names so that they are properly defined
 ;; in *one* place.
