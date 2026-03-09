@@ -282,7 +282,12 @@
          (end-date (gnc-budget-get-period-end-date budget period))
          (query (qof-query-create-for-splits)))
     (qof-query-set-book query (gnc-get-current-book))
-    (xaccQueryAddAccountMatch query (list acct) QOF-GUID-MATCH-ANY QOF-QUERY-AND)
+    (xaccQueryAddAccountMatch
+      query
+      (gnc-accounts-and-all-descendants (list acct))
+      QOF-GUID-MATCH-ANY
+      QOF-QUERY-AND
+    )
     (xaccQueryAddDateMatchTT query #t start-date #t end-date QOF-QUERY-AND)
     (xaccQueryAddClearedMatch query
                               (logand CLEARED-ALL (lognot CLEARED-VOIDED))
@@ -312,7 +317,7 @@
              (lambda (split)
                (value-collector 'add
                                (xaccTransGetCurrency (xaccSplitGetParent split))
-                               (gnc-numeric-to-double (xaccSplitGetValue split))))
+                               (xaccSplitGetValue split)))
              filtered)
             (let ((pair (value-collector 'getpair comm #f)))
               (if (and pair (list? pair) (>= (length pair) 2))
