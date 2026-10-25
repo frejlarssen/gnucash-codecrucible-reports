@@ -7,7 +7,7 @@ echo "----------------------------------------"
 #Is (use-modules (sw_core_utils)) required in config-user.scm?
 
 # List of reports to link and add to config-user.scm
-reports=("cc-transaction.scm" "cc-account-piecharts.scm" "cc-project-balance.scm" "cc-budget-report.scm")
+reports=("cc-transaction.scm" "cc-account-piecharts.scm" "cc-project-balance.scm" "cc-budget-report.scm" "cc-category-barchart.scm")
 
 echo "Linking the files to the userdata directory"
 GNC_USERDATA_DIR=$(gnucash --paths | grep GNC_USERDATA_DIR | awk '{print $2}')
