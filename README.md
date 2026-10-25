@@ -135,6 +135,26 @@ The Project Balance report now looks like this:
 
 **Description**: Like the built-in Budget Report, but you can filter the **Actual** (and Difference) column by a project tag (e.g. `#P-2025Aug`). The Budget column is unchanged. Optionally, "Link to actual transactions" opens the Transaction Report with the same project filter pre-filled.
 
+### CC Category Charts
+
+**Filename**: cc-category-barchart.scm
+
+The income, expense, asset, and liability charts have a **Filter** tab:
+
+- **Include tag prefix**: keep only splits containing the prefix, for example `#P-`.
+- **Exclude tag prefix**: remove splits containing the prefix, for example `#T-`.
+
+Both fields default to blank (no filtering). When both are set, a split must
+match the inclusion and must not match the exclusion. Matching uses literal,
+case-sensitive substrings in the transaction description, notes, or the split's
+own memo, just like the transaction report's default text filter. A tag in the
+description or notes affects every split of that transaction; a tag in a memo
+affects only that split. Sibling memos are not searched.
+
+Filters apply to the chart, displayed table, and CSV export. Asset and liability
+charts show cumulative balances from qualifying splits, including activity before
+the report's start date.
+
 ## Report Features
 
 Disclaimer: Some of this is from the repository I forked, so it might not be up to date./Frej

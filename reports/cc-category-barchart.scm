@@ -26,6 +26,7 @@
 (define-module (gnucash reports standard cc-category-barchart))
 (use-modules (srfi srfi-1))
 (use-modules (srfi srfi-9))
+(use-modules (srfi srfi-13))
 (use-modules (srfi srfi-26))
 (use-modules (ice-9 match))
 (use-modules (gnucash engine))
@@ -84,6 +85,10 @@ developing over time"))
 (define optname-accounts (N_ "Accounts"))
 (define optname-levels (N_ "Levels of Subaccounts"))
 
+(define pagename-filter (N_ "Filter"))
+(define optname-include-prefix (N_ "Include tag prefix"))
+(define optname-exclude-prefix (N_ "Exclude tag prefix"))
+
 (define optname-fullname (N_ "Show long account names"))
 
 (define optname-chart-type (N_ "Chart Type"))
@@ -97,6 +102,41 @@ developing over time"))
 
 (define optname-averaging (N_ "Show Average"))
 (define opthelp-averaging (N_ "Select whether the amounts should be shown over the full time period or rather as the average e.g. per month."))
+
+;; Match literal, case-sensitive substrings, like the transaction report.
+;; Only this split's memo is checked; description and notes are shared.
+;; Return #f when disabled so the original running-balance path can be used.
+(define (make-prefix-filter include-prefix exclude-prefix)
+  (and (not (and (string-null? include-prefix) (string-null? exclude-prefix)))
+       (lambda (split)
+         (define trans (xaccSplitGetParent split))
+         (define (matches? prefix)
+           (any (lambda (text) (and text (string-contains text prefix)))
+                (list (xaccTransGetDescription trans)
+                      (xaccTransGetNotes trans)
+                      (xaccSplitGetMemo split))))
+         (and (or (string-null? include-prefix) (matches? include-prefix))
+              (or (string-null? exclude-prefix) (not (matches? exclude-prefix)))))))
+
+(define (account-balances-at-dates acc dates reverse-bal? split-filter)
+  (let ((comm (xaccAccountGetCommodity acc))
+        (total 0))
+    (define (split->elt split)
+      ;; Precomputed balances include excluded splits. When filtering,
+      ;; build our own cumulative balance, still ignoring closing entries.
+      (let ((balance
+             (if split-filter
+                 (begin
+                   (when (and (not (xaccTransGetIsClosingTxn
+                                    (xaccSplitGetParent split)))
+                              (split-filter split))
+                     (set! total (+ total (xaccSplitGetAmount split))))
+                   total)
+                 (xaccSplitGetNoclosingBalance split))))
+        (gnc:make-gnc-monetary comm (if reverse-bal? (- balance) balance))))
+    (gnc:account-accumulate-at-dates
+     acc dates #:split->elt split->elt
+     #:nosplit->elt (gnc:make-gnc-monetary comm 0))))
 
 (define (options-generator account-types do-intervals?)
   (let* ((options (gnc-new-optiondb)))
@@ -141,6 +181,17 @@ developing over time"))
      options gnc:pagename-accounts optname-levels "c"
      (N_ "Maximum number of levels in the account tree displayed.")
      2)
+
+    ;; Filter tab
+    (gnc-register-string-option options
+      pagename-filter optname-include-prefix "a"
+      (N_ "Include only splits whose transaction description, notes, or own memo contains this literal, case-sensitive prefix (e.g. #P-). Leave blank to include all splits.")
+      "")
+
+    (gnc-register-string-option options
+      pagename-filter optname-exclude-prefix "b"
+      (N_ "Exclude splits whose transaction description, notes, or own memo contains this literal, case-sensitive prefix (e.g. #T-). Exclusion takes precedence over inclusion. Leave blank to exclude none.")
+      "")
 
     ;; Display tab
     (gnc-register-simple-boolean-option options
@@ -233,6 +284,9 @@ developing over time"))
 
          (accounts (get-option gnc:pagename-accounts optname-accounts))
          (account-levels (get-option gnc:pagename-accounts optname-levels))
+         (split-filter (make-prefix-filter
+                        (get-option pagename-filter optname-include-prefix)
+                        (get-option pagename-filter optname-exclude-prefix)))
 
          (chart-type (get-option gnc:pagename-display optname-chart-type))
          (stacked? (get-option gnc:pagename-display optname-stacked))
@@ -367,19 +421,8 @@ developing over time"))
         (define account-balances-alist
           (map
            (lambda (acc)
-             (let* ((comm (xaccAccountGetCommodity acc))
-                    (split->elt (if reverse-bal?
-                                    (lambda (s)
-                                      (gnc:make-gnc-monetary
-                                       comm (- (xaccSplitGetNoclosingBalance s))))
-                                    (lambda (s)
-                                      (gnc:make-gnc-monetary
-                                       comm (xaccSplitGetNoclosingBalance s))))))
-               (cons acc
-                     (gnc:account-accumulate-at-dates
-                      acc dates-list
-                      #:split->elt split->elt
-                      #:nosplit->elt (gnc:make-gnc-monetary comm 0)))))
+             (cons acc (account-balances-at-dates
+                        acc dates-list reverse-bal? split-filter)))
            ;; all selected accounts (of report-specific type), *and*
            ;; their descendants (of any type) need to be scanned.
            (gnc-accounts-and-all-descendants accounts)))
