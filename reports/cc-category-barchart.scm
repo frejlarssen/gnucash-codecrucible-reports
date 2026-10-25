@@ -23,7 +23,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; depends must be outside module scope -- and should eventually go away.
-(define-module (gnucash reports standard category-barchart))
+(define-module (gnucash reports standard cc-category-barchart))
 (use-modules (srfi srfi-1))
 (use-modules (srfi srfi-9))
 (use-modules (srfi srfi-26))
@@ -42,10 +42,10 @@
 ;; spelling errors. The *reportnames* are defined here (and not only
 ;; once at the very end) because I need them to define the "other"
 ;; report, thus needing them twice.
-(define menuname-income (N_ "Income Chart"))
-(define menuname-expense (N_ "Expense Chart"))
-(define menuname-assets (N_ "Asset Chart"))
-(define menuname-liabilities (N_ "Liability Chart"))
+(define menuname-income (N_ "CC Income Chart"))
+(define menuname-expense (N_ "CC Expense Chart"))
+(define menuname-assets (N_ "CC Asset Chart"))
+(define menuname-liabilities (N_ "CC Liability Chart"))
 ;; The names are used in the menu
 
 ;; The menu statusbar tips.
@@ -64,10 +64,15 @@ developing over time"))
 ;; The names here are used 1. for internal identification, 2. as
 ;; tab labels, 3. as default for the 'Report name' option which
 ;; in turn is used for the printed report title.
-(define reportname-income (N_ "Income Over Time"))
-(define reportname-expense (N_ "Expense Over Time"))
-(define reportname-assets (N_ "Assets Over Time"))
-(define reportname-liabilities (N_ "Liabilities Over Time"))
+(define reportname-income (N_ "CC Income Over Time"))
+(define reportname-expense (N_ "CC Expense Over Time"))
+(define reportname-assets (N_ "CC Assets Over Time"))
+(define reportname-liabilities (N_ "CC Liabilities Over Time"))
+
+(define cc-category-barchart-income-uuid "92c5382859144c3f82157ff70e84f138")
+(define cc-category-barchart-expense-uuid "255bb1b5844942b7bd0631c9ad4a2056")
+(define cc-category-barchart-asset-uuid "1f03b66818144413a2a58f3f367f16cf")
+(define cc-category-barchart-liability-uuid "b931a0897ceb4bbdbfa21d2fcb2b20c2")
 
 ;; Option names
 (define optname-from-date (N_ "Start Date"))
@@ -715,15 +720,15 @@ Please deselect the accounts with negative balances."))
  (list
   ;; reportname, account-types, inc-exp?,
   ;; menu-reportname, menu-tip, reverse-bal?, uuid
-  (list reportname-income (list ACCT-TYPE-INCOME) #t menuname-income menutip-income #t category-barchart-income-uuid)
-  (list reportname-expense (list ACCT-TYPE-EXPENSE) #t menuname-expense menutip-expense #f category-barchart-expense-uuid)
+  (list reportname-income (list ACCT-TYPE-INCOME) #t menuname-income menutip-income #t cc-category-barchart-income-uuid)
+  (list reportname-expense (list ACCT-TYPE-EXPENSE) #t menuname-expense menutip-expense #f cc-category-barchart-expense-uuid)
   (list reportname-assets
         (list ACCT-TYPE-ASSET ACCT-TYPE-BANK ACCT-TYPE-CASH ACCT-TYPE-CHECKING
               ACCT-TYPE-SAVINGS ACCT-TYPE-MONEYMRKT
               ACCT-TYPE-RECEIVABLE ACCT-TYPE-STOCK ACCT-TYPE-MUTUAL
               ACCT-TYPE-CURRENCY)
-        #f menuname-assets menutip-assets #f category-barchart-asset-uuid)
+        #f menuname-assets menutip-assets #f cc-category-barchart-asset-uuid)
   (list reportname-liabilities
         (list ACCT-TYPE-LIABILITY ACCT-TYPE-PAYABLE ACCT-TYPE-CREDIT
               ACCT-TYPE-CREDITLINE)
-        #f menuname-liabilities menutip-liabilities #t category-barchart-liability-uuid)))
+        #f menuname-liabilities menutip-liabilities #t cc-category-barchart-liability-uuid)))
