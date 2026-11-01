@@ -514,8 +514,10 @@ balance at a given time. Extended with tags."))
                    (converted (exchange-fn
                                raw-mon
                                report-currency))
-                   (raw-amount (abs (gnc:gnc-monetary-amount raw-mon)))
-                   (converted-amount (abs (gnc:gnc-monetary-amount converted)))
+                   ;; Preserve signs so refunds reduce each tag's net expense,
+                   ;; like the standard report's account-balance aggregation.
+                   (raw-amount (gnc:gnc-monetary-amount raw-mon))
+                   (converted-amount (gnc:gnc-monetary-amount converted))
                    ;; Fallback to raw value when conversion table/rates are missing.
                    (amount (if (and (= converted-amount 0)
                                     (not (= raw-amount 0)))
