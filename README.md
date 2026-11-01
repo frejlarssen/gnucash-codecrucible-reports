@@ -141,8 +141,11 @@ The Project Balance report now looks like this:
 
 The income, expense, asset, and liability charts have a **Filter** tab:
 
-- **Include tag prefix**: keep only splits containing the prefix, for example `#P-`.
-- **Exclude tag prefix**: remove splits containing the prefix, for example `#T-`.
+- **Include tag prefix**: keep splits containing any listed prefix, for example `#T-, #P-`.
+- **Exclude tag prefix**: remove splits containing any listed prefix, for example `#I-, #T-, #P-` for ordinary monthly spending.
+
+Both fields accept comma-separated prefixes. Spaces around entries and empty
+entries are ignored; a single prefix still works.
 
 Both fields default to blank (no filtering). When both are set, a split must
 match the inclusion and must not match the exclusion. Matching uses literal,

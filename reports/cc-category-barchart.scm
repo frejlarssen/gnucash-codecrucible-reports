@@ -86,8 +86,8 @@ developing over time"))
 (define optname-levels (N_ "Levels of Subaccounts"))
 
 (define pagename-filter (N_ "Filter"))
-(define optname-include-prefix (N_ "Include tag prefix"))
-(define optname-exclude-prefix (N_ "Exclude tag prefix"))
+(define optname-include-prefix (N_ "Include tag prefix(es)"))
+(define optname-exclude-prefix (N_ "Exclude tag prefix(es)"))
 
 (define optname-fullname (N_ "Show long account names"))
 
@@ -107,16 +107,24 @@ developing over time"))
 ;; Only this split's memo is checked; description and notes are shared.
 ;; Return #f when disabled so the original running-balance path can be used.
 (define (make-prefix-filter include-prefix exclude-prefix)
-  (and (not (and (string-null? include-prefix) (string-null? exclude-prefix)))
-       (lambda (split)
-         (define trans (xaccSplitGetParent split))
-         (define (matches? prefix)
-           (any (lambda (text) (and text (string-contains text prefix)))
-                (list (xaccTransGetDescription trans)
-                      (xaccTransGetNotes trans)
-                      (xaccSplitGetMemo split))))
-         (and (or (string-null? include-prefix) (matches? include-prefix))
-              (or (string-null? exclude-prefix) (not (matches? exclude-prefix)))))))
+  (define (parse-prefixes value)
+    (remove string-null? (map string-trim-both (string-split value #\,))))
+  (let ((include-prefixes (parse-prefixes include-prefix))
+        (exclude-prefixes (parse-prefixes exclude-prefix)))
+    (and (not (and (null? include-prefixes) (null? exclude-prefixes)))
+         (lambda (split)
+           (define trans (xaccSplitGetParent split))
+           (define texts
+             (list (xaccTransGetDescription trans)
+                   (xaccTransGetNotes trans)
+                   (xaccSplitGetMemo split)))
+           (define (matches? prefixes)
+             (any (lambda (prefix)
+                    (any (lambda (text) (and text (string-contains text prefix)))
+                         texts))
+                  prefixes))
+           (and (or (null? include-prefixes) (matches? include-prefixes))
+                (not (matches? exclude-prefixes)))))))
 
 (define (account-balances-at-dates acc dates reverse-bal? split-filter)
   (let ((comm (xaccAccountGetCommodity acc))
@@ -185,12 +193,12 @@ developing over time"))
     ;; Filter tab
     (gnc-register-string-option options
       pagename-filter optname-include-prefix "a"
-      (N_ "Include only splits whose transaction description, notes, or own memo contains this literal, case-sensitive prefix (e.g. #P-). Leave blank to include all splits.")
+      (N_ "Include only splits whose transaction description, notes, or own memo contains any of these comma-separated, literal, case-sensitive prefixes (e.g. #T-, #P-). Spaces around entries and empty entries are ignored. Leave blank to include all splits.")
       "")
 
     (gnc-register-string-option options
       pagename-filter optname-exclude-prefix "b"
-      (N_ "Exclude splits whose transaction description, notes, or own memo contains this literal, case-sensitive prefix (e.g. #T-). Exclusion takes precedence over inclusion. Leave blank to exclude none.")
+      (N_ "Exclude splits whose transaction description, notes, or own memo contains any of these comma-separated, literal, case-sensitive prefixes (e.g. #I-, #T-, #P-). Spaces around entries and empty entries are ignored. Exclusion takes precedence over inclusion. Leave blank to exclude none.")
       "")
 
     ;; Display tab
