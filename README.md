@@ -49,6 +49,8 @@ The reports are:
 
 * Budget Report Extended (`budget-extended.scm`)
 
+* CC Yearly Summary (`cc-yearly-summary.scm`)
+
 (More fancy ones will be added later. (Pie-charts etc would be cool.))
 
 ## Installation
@@ -157,6 +159,51 @@ affects only that split. Sibling memos are not searched.
 Filters apply to the chart, displayed table, and CSV export. Asset and liability
 charts show cumulative balances from qualifying splits, including activity before
 the report's start date.
+
+### CC Yearly Summary
+
+**Filename**: cc-yearly-summary.scm
+
+Open **Reports → Income & Expense → CC Yearly Summary**. The report defaults to
+the previous calendar year and all income and expense accounts. Change the start
+and end dates to report on another year or a rolling 12-month period.
+
+The report groups activity into four dimensions, with one row per full tag:
+
+| Dimension | Classification |
+| --- | --- |
+| Regular | No classification tag |
+| Irregular | `#I-`, e.g. `#I-Annual` or `#I-Replacement` |
+| Travels | `#T-`, e.g. `#T-Malaysia26` |
+| Projects | `#P-`, e.g. `#P-Visa` |
+
+Tags are case-sensitive, whitespace-separated tokens in transaction descriptions,
+notes, or the split's own memo. Other tag prefixes do not affect classification.
+Sibling memos are not searched. Each split may have only one distinct
+classification tag, even within the same dimension. Repeating the same tag is
+allowed. Clashes show transaction links, accounts, memos, and conflicting tags;
+totals and CSV export remain unavailable until the clashes are resolved.
+
+Each tag, dimension subtotal, and grand total shows income, expenses, net cost
+(expenses minus income), and monthly averages. Monthly averages always divide
+the selected period's totals by 12, so select a full year for a monthly average.
+Refunds reduce expenses; zero and negative totals are retained. Tagged income,
+such as a contribution toward a trip, reduces that tag's net cost. Regular income
+includes salary, so a negative grand net cost indicates an overall surplus.
+
+Bank-account counterparts, transfers between asset accounts, voided splits, and
+closing transactions are excluded. Amounts are converted to the report currency
+using the selected price source and posted dates. A nonzero amount that cannot be
+converted produces an error instead of incomplete totals.
+
+Use **Export → CSV** in the report's export dialog to export the same rows,
+including subtotals and the grand total. CSV includes date/currency metadata and
+a `row_type` column (`tag`, `subtotal`, `grand-total`); filter by row type when
+summing in a spreadsheet to avoid double-counting subtotal rows.
+
+Run `./setup.sh` to register the new report, then restart GnuCash. For manual
+installation, link `reports/cc-yearly-summary.scm` into `GNC_USERDATA_DIR` and add
+`(load (gnc-build-userdata-path "cc-yearly-summary.scm"))` to `config-user.scm`.
 
 ## Report Features
 
